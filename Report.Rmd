@@ -1,8 +1,8 @@
 ---
-title: 'Your Title Here'
-author: "Don Francisco"
+title: 'Analyzing SARS-CoV-2 in Brazil Based on Patient Geo Location and Sex'
+author: "Chaitrali Deshpande"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: pdf_document
+output: html_document
 csl: bioinformatics.csl
 bibliography: references.bib
 params:
@@ -54,6 +54,7 @@ purrr::walk(function_paths, source)
 # these are the output of the bash pipeline
 stacked_vcfs <- parse_tidy_and_stack_vcfs(
   vcf_dir_path = params$vcf_dir_path)
+# write.csv(stacked_vcfs, "stacked_vcfs.csv")
 
 # load in the gff file with genome annotations for SARS-CoV-2
 gff <- read_gff(gff_file_path = params$gff_file_path)
@@ -63,10 +64,12 @@ gene_table <- extract_genes_from_gff(annotation_object = gff)
 
 # combine the stacked vcf table with the gene names and the metadata from
 # the sra runtable file
+print(params$sra_runtable_path)
 vcf_with_metadata <- add_genes_metadata_to_vcfstack(
   sra_runtable_path = params$sra_runtable_path,
   stacked_vcf = stacked_vcfs,
   cleaned_genes_table = gene_table)
+# write.csv(vcf_with_metadata, "vcf_with_metadata.csv")
 ```
 
 # Figures
