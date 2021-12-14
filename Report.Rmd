@@ -114,6 +114,13 @@ final_table <- left_join(left_join(total_table, female_table), male_table)
 final_table[is.na(final_table)] = 0
 ``` 
 
+```{r load-brazil-data}
+brazildata <- read_csv(file.path("data", "raw_data",
+                                  "brazil_covid_data_citywise.csv"))
+
+tidybrazildata <- brazildata[,c("date", "city", "totalCases_per_100k_inhabitants", "vaccination_rate")]
+```
+
 # Figures
 
 ```{r sample-plot}
