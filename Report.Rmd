@@ -260,6 +260,22 @@ gene_table %>%
 
 **Table 1**: Gene names, locations, and lengths in the SARS-CoV-2 genome. Higher SNP counts in the S and N genes may be related to the larger size of these genes.
 
+```{r example-table}
+final_table %>%  knitr::kable()
+```
+**Table 2**: Gene names, locations, and lengths in the SARS-CoV-2 genome. Higher SNP counts in the S and N genes may be related to the larger size of these genes.
 
+```{r example-table}
+# An example table to show the length of each gene using its start and end
+gene_table %>%
+  mutate(length = end - start) %>%
+  select(gene_name, start, end, length) %>%
+  knitr::kable(col.names = c("Gene Name",
+                             "Start",
+                             "End",
+                             "Length"))
+```
+
+**Table 3**: Gene names, locations, and lengths in the SARS-CoV-2 genome. Higher SNP counts in the S and N genes may be related to the larger size of these genes.
 
 # Sources Cited
