@@ -20,23 +20,106 @@ knitr::opts_chunk$set(echo = FALSE,
 
 # Background and Overview
 
-This is a report on SARS-CoV-2, including some variant analysis [@koyama2020variant].
+The year 2020 was completely dominated by the COVID-19 pandemic.  It is still continuing to spread and mutate even after the discovery of numerous vaccines.  It has completely changed the way people interact with each other as the COVID-19 is an air-borne, contagious disease.  First discovered in Wuhan, China in December, 2019, COVID-19 is caused by severe acute respiratory syndrome coronovirus 2 (SARS-CoV-2).  Symptoms of COVID-19 include fever, chills, shortness of breath, exhaustion, headache, sore throat, nausea, and diarrhea.  The United States of America (US), India, and Brazil are the top three countries with the most COVID-19 cases and deaths caused by COVID-19.  The pandemic in Brazil is especially XXXXXXXXXXX given the smaller population of Brazil compared to US and India.
+
+Between January 3rd and December 10th, 2021, there were 22,167,781 confirmed cases of COVID-19 in Brazil, with 616,251 deaths.  Brazil was averaging over 1000 deaths per day by June 2021.  The foreigners traveling from Europe to the different states of Brazil are considered the main reason for the widespread spread of the disease.  While he underdeveloped of north and northeast regions of Brazil are highly vulnerable, the metropolitan states Sao Paulo and Rio de Janeiro contributed to XXXXXX. 
+
+I recently read an article on how Brazil is becoming the 'natural laboratory' for the COVID-19 virus and also a breeding ground for new variants of the virus. The Delta (B.1.617.2) variant cases were increased from 2.3 percent in June to 23.6 percent in July. It is a nine fold increase in the cases. The cases were emerging and it became a variant of concern. I was intrigued by the information and chose to work with this data.[@lamarca2021genomic] This variant of concern (VOC) is said to be more contagious than other variants and targets the non-vaccinated people.[@katella20215] The Delta virus mutations are concerning since it mutates numerous time to the spike protein unlike other variants.[@callaway2021mutation] It has 13 mutations that alters the amino-acid sequences of the protein it encodes.
+I have worked on my project to analyze the impact of Delta Brazilian states and municipalities to find out more about how the they were affected by the Delta variants of SARS-CoV-2. This dataset includes timeframe from June, 2021 to July, 2021 when  the cases of Delta variant SARS-CoV-2 were on peak.
 
 # Methods
 
-See the set of tutorials on the [vcfR package website](https://knausb.github.io/vcfR_documentation/index.html).
+## Genome Sequence Data 
 
-You may also want to use any of a range of different COVID data packages and data sources:
+I downloaded the Genome sequencing data of COVID-19 patients in municipalities of Brazil that were dominantly affected by COVID-19 states from the NCBI (National Center for Biotechnology Information) database.  It can be found on BioProject Resource database of NCBI titled 'SARS-CoV-2 genome sequencing Brazil' with Accession Number: PRJNA774631 and SRA Study: SRP343167.  It has total of 66 sequence data obtained using on Illumina platform from Brazil during June-July 2021.  
 
-* https://kjhealy.github.io/covdata/
-* https://github.com/como-ph/oxcovid19
-* https://ropensci.org/blog/2020/10/20/searching-medrxivr-and-biorxiv-preprint-data/
-* https://covidtracking.com/data/api
-  * `readr::read_csv("https://api.covidtracking.com/v1/states/daily.csv")`
+### Genome Sequence Processing Pipeline
+* 1. Retrieve the SARS-CoV-2 Sequencing Data (SraRunTable): 
+The metadata for Brazil was downloaded from the NCBI website.
+* 2. Download the raw sequences and check the quality of data:
+The downloaded raw sequences data was pushed through 'fasterq-dump', a program written 
+by NCBI to make the downoading of raw sequences feasible. The data was forked by
+'fastqc' and analysed for its quality.
+* 3. Eliminate low quality and unnecessary data:
+The raw sequencing dataset contains number of redundant data. To trim off the primers, delete low-quality base pairs and bad reads, 'trimmomatic' is used.
+* 4. Sorting the dataset:
+The trimmed data is mapped against the reference genome and index were created using 'bwa'. The data was sorted with the help of sam_and_bam tools.
+* 5. Data visualization and pearl script:
+To visualize the processed and mapped data, it is passed through pearl scripting. 
+'vcf' and 'igv' are used to view reads.
+* 6. Graphical analysis:
+I have used ggplots, ggthemes to create plots, geome, scales of my data to understand more about 
+the sequences.
+* 7. Analysing visuals and knitting:
+Using vcfR the data is passed to 'R' for visualization and knitted using 'knitter'
+to create the report of the analysis. 
 
-## Subsections are ok too
+SraRuntable: Using SraRunTable, I downloaded SRA Run table from the internet.
+fasterq-dump: It was input to the program 'fasterq-dump' written by NCBI to download raw sequence data to the computer in a fast way.
+fastqc: I used forked 'fastqc' to check the quality of raw data.
+trimmomatic: The data was sent to 'trimmomatic' which is an adapter to trim off primers and also gets rid of low quality bases and bad reads.
+bwa (Burrows-Wheeler Aligner): The downloaded, cleaned and trimmed data was fed into 'bwa' (Burrows-Wheeler Aligner) that created the index and maps the short reads against the reference genome.
+sam_and_bam: Later the data goes to sam_and_bam files i.e. samtools and bamtools which sorted and processed the mapped reads. 
+vcf files: Then it was passed to pearl script which takes mapped and processed sam_and_bam files and processes it into 'vcf' files.
+igvR: The mapped and processed reads can be viewed in IGV.
+vcfR[@knaus2017vcfr]: It is passed to 'R' using the package 'vcfR' for the analysis and visualization.
+
+## Brazil COVID-19 Pandemic Statistics
+
+In addition to the Genome data, I scoured the internet to obtain municipality-level statistical regarding the number of COVID-19 cases, deaths and vaccination rate in Brazil in the time period between June-July 2021.  The github repository [@CotaCovid19br2020] maintains temporal statistical data for COID-19 pandemic in Brazil.  I extracted the data relevant to this project i.e. data on 1st June, 2021 using excel and copied it in a csv file so that it can be imported by the R script.
+
+## R Packages
+tinytex: Using tinytex I have created pdf files for markdown.
+ggplot2[@ggplot2]: Using ggplot2 I have created graphics for my data analysis.
+ggthemes[@ggthemes]: Downloaded ggthemes to get an additional gnome, scales and ggplot for my analysis.
+hrbrthemes[@hrbrthmes]and viridis[@viridis]: Using hrbrthemes to color and plotted labels to the graphs.
+knitter: Using 'knitter' a report is created including analysis. 
+Rcpp[@eddelbuettel2011rcpp]: The Rcpp package provided a consistent API for seamlessly accessing, extending or modifying R objects at the C++ level.
+janitor[@janitor]: To clean unnecessary data frames, I have used janitor package for my analysis.
+deplore and tidyr[@tidyr]: To categorize and parse the data I have used dplyr and tidyr.
+readr[@readr]: I have used readR to read in and write the csv files of my data folder.
+magrittr and stringr[@stringr][@magrittr]: To make data tables and piping them as well as to avoid nested function calls and minimize the need for local variables and definition in my analysis, I have used magrittr. 
 
 # Results and Discussion
+
+## Brazil Sequencing Data
+
+### People Infected with SARS-CoV-2 from Different Brazilian municipalities of Rio de Janerio:
+
+After analyzing the data from June, 2020 to July, 2020 it is observed that the given data downloaded from NCBI  is correct when verified with other sources on the internet. The Brazilian state Rio De Janerio has underdeveloped and vulnerable municipality population. 
+
+## Mutations in the variant:
+
+After analyzing the data of SNP's, the count of S genes are highest as compared to other followed by N. The data is collected from June and July 2020 when the variant was continuously mutating. It is concluded by the graph that Gene S has highest length 3821 followed by Gene N which explains the rate of mutation in them will be faster as they undergo the transcription and translation processes. 
+
+Total count of mutations is higher in female when compared to male. It can be concluded that the population of female in the cities with greater number of Covid-19 cases is higher than male. That means more women in those area were affected. However, I am unsure if the SNP's have any kind of relation with gender.  
+
+## Mutations of the variants: 
+
+The number of death in these municipalities during the time shows the effects of mutations of the variant and the analysis is correct. The Delta variant seems to have widely impacted the cases during that time. The cases of mutations are higher in Rio de Janerio, Mesquita and Duque de Caxias cities for male populatiion. And the rate of mutation is higher in Mesquita, Rio de Janerio and Nova Iguacu for female population. I concluded that the overall female population was infected with the Delta variant. I am not sure if it related to gender. 
+
+* 1. Count of distinct SNPs in Named SARS-CoV-2 Genes:
+I plotted the SNPs (single nucleotide polymorphism) against named SARS-CoV-2. 
+
+* 2. Table containing gene name and length;
+From the data in the table it is concluded that Gene S has highest length 3821 and ORF10
+has the lowest 116. The ORF7a and ORF8 have same length i.e. 365.
+
+*3. Analysis of samples from male and female from different municipalities:
+The data in the table shows the total number of samples analysed for the SARS-CoV-2 
+mutation. The samples from five municipalities were disregarded since the number of 
+samples given were zero. 
+
+* 4. Count of distinct SNP's in male and female:
+The graph shows the information how SNP's have increased in the set of male sample analyzed.
+The data was calculated by dividing the count of genes by number of sample analyzed.
+
+* 5.  
+Total mutations divided by the number of sample:
+This graph shows the total mutations count is somewhat similar in male and female for Japeri municipality.
+The reason could be the  
+
+# Conclusion
 
 ```{r load-packages-and-functions}
 library("vcfR")
