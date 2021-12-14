@@ -54,7 +54,7 @@ function_paths <- list.files("code/functions", full.names = TRUE)
 purrr::walk(function_paths, source)
 ```
 
-```{r make directories}
+```{r make-directories}
 # create necessary directories to organize output
 dir.create(file.path("data", "processed_data"), showWarnings = FALSE)
 dir.create(file.path("output", "figures"), showWarnings = FALSE)
@@ -102,16 +102,16 @@ sraruntable <- sraruntable %>%
 # count Municipalities wise female samples in the metadata
 female_table <- sraruntable %>% filter(host_sex == "female") %>% 
   count(Municipalities) %>%
-  rename(Female = n)
+  rename(female_count = n)
 
 # count Municipalities wise female samples in the metadata
 male_table <- sraruntable %>% filter(host_sex == "male") %>% 
   count(Municipalities) %>%
-  rename(Male = n)
+  rename(male_count = n)
 
 # count Municipalities wise total samples in the metadata
 total_table <- sraruntable %>% count(Municipalities, sort = TRUE) %>%
-  rename(Total = n)
+  rename(total_count = n)
 
 # merge tables and remove NA
 final_table <- left_join(left_join(total_table, female_table), male_table)
@@ -122,7 +122,9 @@ final_table[is.na(final_table)] = 0
 brazildata <- read_csv(file.path("data", "raw_data",
                                   "brazil_covid_data_citywise.csv"))
 
-tidybrazildata <- brazildata[,c("date", "city", "totalCases_per_100k_inhabitants", "vaccination_rate")]
+tidybrazildata <- brazildata[,c("date", "city",
+                                "totalCases_per_100k_inhabitants",
+                                "vaccination_rate")]
 ```
 
 # Figures
@@ -159,13 +161,14 @@ figure2 <- vcf_with_metadata %>%
   ggplot(aes(x = gene, y = n, fill = host_sex)) +
     geom_bar(stat='identity', position='dodge') + # makes a bar plot
     labs(title = "Count of distinct SNPs in Named SARS-CoV-2 Genes",
-         x = "Gene Name", y = "Count", fill = "Host sex") + #add title, axis labels, legend label
+         x = "Gene Name", y = "Count", fill = "Host sex") + 
+            #add title, axis labels, legend label
     geom_col(aes(fill = host_sex), position = "dodge") +
     geom_text(aes(label = n), position = position_dodge(0.9), vjust=1.5) +
         # add labels to the bars
     theme_few() # get rid of the grey background
-  ggsave(figure2, filename = paste0("output/figures/figure2.png"))
-  figure2
+ggsave(figure2, filename = paste0("output/figures/figure2.png"))
+figure2
 ```
 
 **Figure 2**: N and S genes have more unique SNPs in the set of samples analyzed.
@@ -174,8 +177,9 @@ figure2 <- vcf_with_metadata %>%
 # create a plot of unique SNP locations within each gene across different sex
 figure3 <- vcf_with_metadata %>%
   group_by(Municipalities, host_sex) %>%
-  filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI", "NOVA BASSANO",
-                               "SANTO ANTONIO DE PADUA", "XAMBIOA")) %>%
+  filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
+                                "NOVA BASSANO", "SANTO ANTONIO DE PADUA",
+                                "XAMBIOA")) %>%
   tally() %>%   # this gives a column n for the number of gene by position
   ggplot(aes(x = Municipalities, y = n, fill = host_sex)) +
       geom_bar(stat='identity', position='dodge') + # makes a bar plot
@@ -187,8 +191,8 @@ figure3 <- vcf_with_metadata %>%
       theme_few() +  # get rid of the grey background
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
         # makes the x-label vertical
-  ggsave(figur3, filename = paste0("output/figures/figure3.png"))
-  figure3
+ggsave(figure3, filename = paste0("output/figures/figure3.png"))
+figure3
 ```
 
 **Figure 3**: N and S genes have more unique SNPs in the set of samples analyzed.
@@ -198,27 +202,36 @@ figure3 <- vcf_with_metadata %>%
 # create a plot of unique SNP locations within each gene across different sex
 total_mutations_sex <- vcf_with_metadata %>%
   group_by(Municipalities, host_sex) %>%
-  filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI", "NOVA BASSANO",
-                               "SANTO ANTONIO DE PADUA", "XAMBIOA")) %>%
-  tally()
+  filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI", 
+                                "NOVA BASSANO", "SANTO ANTONIO DE PADUA", 
+                                "XAMBIOA")) %>%
+  tally() %>%
+  rename(mutation_count = n)
   
-total_mutations_sex <- rbind(left_join(total_mutations_sex %>% filter(host_sex=="male"), male_table),
-      left_join(total_mutations_sex %>% filter(host_sex=="female"), female_table)) %>%
-  mutate(normalized = round(n / sample_count,0))
+total_mutations_sex <- rbind(left_join(total_mutations_sex %>%
+                                filter(host_sex=="male"), male_table),
+                             left_join(total_mutations_sex %>%
+                                filter(host_sex=="female"), female_table)) %>%
+                  mutate(sample_count = coalesce(male_count, female_count)) %>%
+                  mutate(normalized = round(mutation_count / sample_count,0))
 
 # this gives a column n for the number of gene by position
-figure4 <- ggplot(total_mutations_sex, aes(x = Municipalities, y = normalized, fill = host_sex)) +
-    geom_bar(stat='identity', position='dodge') + # makes a bar plot
-    labs(title = "Total Mutations Divided by Number of Samples", x = "Municipality", y = "Count", 
-       fill = "Host Sex") + #add title, axis labels, legend label
-    geom_col(aes(fill = host_sex), width = 0.5, position = position_dodge(0.5)) +
-    geom_text(aes(label = normalized), position = position_dodge(0.9), vjust=1.5) +
+figure4 <- ggplot(total_mutations_sex, 
+                  aes(x = Municipalities, y = normalized, fill = host_sex)) +
+  geom_bar(stat='identity', position='dodge') + # makes a bar plot
+  labs(title = "Total Mutations Divided by Number of Samples",
+       x = "Municipality", y = "Count", fill = "Host Sex") + 
+          #adds title, axis labels, legend label
+  geom_col(aes(fill = host_sex), width = 0.5, position = position_dodge(0.5)) +
+  geom_text(aes(label = normalized),
+            position = position_dodge(0.9),
+            vjust=1.5) +
       # add labels to the bars
-    theme_few() +  # get rid of the grey background
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  theme_few() +  # get rid of the grey background
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
       # makes the x-label vertical
-  ggsave(figure4, filename = paste0("output/figures/figure4.png"))
-  figure4
+ggsave(figure4, filename = paste0("output/figures/figure4.png"))
+figure4
 ```
 
 **Figure 4**: N and S genes have more unique SNPs in the set of samples analyzed.
@@ -227,8 +240,9 @@ figure4 <- ggplot(total_mutations_sex, aes(x = Municipalities, y = normalized, f
 # create a plot of unique SNP locations within each gene across different sex
 figure5 <- vcf_with_metadata %>%
   group_by(Municipalities, host_sex, pos) %>%
-  filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI", "NOVA BASSANO",
-                               "SANTO ANTONIO DE PADUA", "XAMBIOA")) %>%
+  filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
+                                "NOVA BASSANO", "SANTO ANTONIO DE PADUA",
+                                "XAMBIOA")) %>%
   tally() %>%
   group_by(Municipalities, host_sex) %>%
   tally() %>%
@@ -243,8 +257,8 @@ figure5 <- vcf_with_metadata %>%
       theme_few() +  # get rid of the grey background
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
         # makes the x-label vertical
-  ggsave(figure5, filename = paste0("output/figures/figure5.png"))
-  figure5
+ggsave(figure5, filename = paste0("output/figures/figure5.png"))
+figure5
 ```
 
 **Figure 5**: N and S genes have more unique SNPs in the set of samples analyzed.
@@ -252,61 +266,72 @@ figure5 <- vcf_with_metadata %>%
 ```{r figure6}
 # create a plot of unique SNP locations within each gene across different sex
 
-total_mutations <- vcf_with_metadata %>%
-  group_by(Municipalities) %>%
-  filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI", "NOVA BASSANO",
-                               "SANTO ANTONIO DE PADUA", "XAMBIOA")) %>%
-  tally()
-
-total_mutations <- left_join(total_mutations, final_table) %>%
-                          mutate(normalized = round(n / Total, 0))
+# total_mutations <- vcf_with_metadata %>%
+#   group_by(Municipalities) %>%
+#   filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI", 
+#                                 "NOVA BASSANO", "SANTO ANTONIO DE PADUA", 
+#                                 "XAMBIOA")) %>%
+#   tally()
+# 
+# total_mutations <- left_join(total_mutations, final_table) %>%
+#                    mutate(normalized = round(n / total_count, 0))
 
 total_SNP <- vcf_with_metadata %>%
   group_by(Municipalities, pos) %>%
-  filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI", "NOVA BASSANO",
-                               "SANTO ANTONIO DE PADUA", "XAMBIOA")) %>%
+  filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
+                                "NOVA BASSANO", "SANTO ANTONIO DE PADUA",
+                                "XAMBIOA")) %>%
   tally() %>%
   group_by(Municipalities) %>%
   tally()
 
-
-p1 <- left_join(total_SNP, tidybrazildata, by = c("Municipalities" = "city") ) %>% 
-    ggplot(aes(x = n, y = totalCases_per_100k_inhabitants)) +
-    geom_point(aes(color = Municipalities)) +
-    labs(title = "Total Cases vs. Total Unique SNPs", 
-         x = "Count of unique SNPs", y = "Total cases per 100k inhabitants") + 
+figure6 <- left_join(total_SNP, tidybrazildata,
+                     by = c("Municipalities" = "city") ) %>%
+  ggplot(aes(x = n, y = totalCases_per_100k_inhabitants)) +
+  geom_point(aes(color = Municipalities)) +
+  labs(title = "Total Cases vs. Total Unique SNPs",
+       x = "Count of unique SNPs", y = "Total cases per 100k inhabitants") + 
       #add title, axis labels, legend label
     # geom_text(aes(label = n), position = position_dodge(0.9), hjust=1.5) +
     # # add labels to the bars
-    theme_few() + theme(legend.position="bottom") # get rid of the grey background
-
-p2 <- left_join(total_SNP, tidybrazildata, by = c("Municipalities" = "city") ) %>% 
-    ggplot(aes(x = n, y = vaccination_rate)) +
-    geom_point(aes(color = Municipalities)) +
-    labs(title = "Total Cases vs. Total Unique SNPs", 
-         x = "Count of unique SNPs", y = "Total cases per 100k inhabitants") + 
-      #add title, axis labels, legend label
-    # geom_text(aes(label = n), position = position_dodge(0.9), hjust=1.5) +
-    # # add labels to the bars
-    theme_few() # get rid of the grey background
-
-g_legend<-function(a.gplot){
-  tmp <- ggplot_gtable(ggplot_build(a.gplot))
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  legend <- tmp$grobs[[leg]]
-  return(legend)}
-
-mylegend<-g_legend(p1)
-
-p3 <- grid.arrange(arrangeGrob(p1 + theme(legend.position="none"),
-                         p2 + theme(legend.position="none"),
-                         nrow=1),
-             mylegend, nrow=2,heights=c(10, 1))
-
-ggsave(p3, filename = paste0("output/figures/figure6.png"))
+  theme_few() # get rid of the grey background
+ggsave(figure6, filename = paste0("output/figures/figure6.png"))
+figure6
 ```
 
-**Figure 6**: N and S genes have more unique SNPs in the set of samples analyzed.
+**Figure 7**: N and S genes have more unique SNPs in the set of samples analyzed.
+
+```{r figure7}
+figure7 <- left_join(total_SNP, tidybrazildata,
+                     by = c("Municipalities" = "city") ) %>% 
+  ggplot(aes(x = n, y = vaccination_rate)) +
+  geom_point(aes(color = Municipalities)) +
+  labs(title = "Total Cases vs. Total Unique SNPs", 
+       x = "Count of unique SNPs", y = "Total cases per 100k inhabitants") + 
+    #add title, axis labels, legend label
+  # geom_text(aes(label = n), position = position_dodge(0.9), hjust=1.5) +
+  # # add labels to the bars
+  theme_few() # get rid of the grey background
+ggsave(figure7, filename = paste0("output/figures/figure7.png"))
+figure7
+
+# g_legend<-function(a.gplot){
+#   tmp <- ggplot_gtable(ggplot_build(a.gplot))
+#   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+#   legend <- tmp$grobs[[leg]]
+#   return(legend)}
+# 
+# mylegend<-g_legend(p1)
+# 
+# p3 <- grid.arrange(arrangeGrob(p1 + theme(legend.position="none"),
+#                          p2 + theme(legend.position="none"),
+#                          nrow=1),
+#              mylegend, nrow=2,heights=c(10, 1))
+# 
+# ggsave(p3, filename = paste0("output/figures/figure6.png"))
+```
+
+**Figure 7**: N and S genes have more unique SNPs in the set of samples analyzed.
 
 # Tables
 
@@ -319,30 +344,34 @@ library(kableExtra)
 gene_table %>%
   mutate(length = end - start) %>%
   select(gene_name, start, end, length) %>%
-  knitr::kable(col.names = c("Gene Name", "Sequence Start" , "Sequence End" , "Gene Length"),
-               align = 'c', 
-               caption = "Table 1: An example table caption it is long.", booktabs = TRUE) %>% 
-    kable_styling(bootstrap_options = "striped")
+  knitr::kable(col.names = c("Gene Name", "Sequence Start" ,
+                             "Sequence End" , "Gene Length"),
+               align = 'c',
+               caption = "Table 1: An example table caption it is long.",
+               booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = "striped")
 ```
 
 **Table 1**: Gene names, locations, and lengths in the SARS-CoV-2 genome. Higher SNP counts in the S and N genes may be related to the larger size of these genes.
 
 ```{r table2}
-final_table %>%  knitr::kable(col.names = 
+final_table %>%  knitr::kable(col.names =
                                    c("Municipality",
                                      "Total sample count",
-                                     "Female Count", "Male Count"), align = 'c') %>% 
-    kable_styling(bootstrap_options = "striped")
+                                     "Female Count", "Male Count"),
+                              align = 'c') %>%
+  kable_styling(bootstrap_options = "striped")
 ```
 **Table 2**: Gene names, locations, and lengths in the SARS-CoV-2 genome. Higher SNP counts in the S and N genes may be related to the larger size of these genes.
 
 ```{r table3}
 # An example table to show the length of each gene using its start and end
-tidybrazildata %>%  knitr::kable(col.names = 
+tidybrazildata %>%  knitr::kable(col.names =
                                    c("Date", "Municipality",
                                      "Total Cases per 100k Inhabitants",
-                                     "Fully Vaccination Rate (%)"), align = 'c') %>% 
-    kable_styling(bootstrap_options = "striped")
+                                     "Fully Vaccination Rate (%)"),
+                                 align = 'c') %>%
+  kable_styling(bootstrap_options = "striped")
 ```
 
 **Table 3**: Gene names, locations, and lengths in the SARS-CoV-2 genome. Higher SNP counts in the S and N genes may be related to the larger size of these genes.
