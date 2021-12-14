@@ -89,6 +89,31 @@ write_csv(vcf_with_metadata, file.path("data", "processed_data",
                                               "vcf_with_metadata.csv"))
 ```
 
+```{r load-sra-data}
+# read metadata
+sraruntable <- read_csv(params$sra_runtable_path)
+sraruntable <- sraruntable %>%
+  tidyr::separate(geo_loc_name, c(NA,"Municipalities"), sep = ",")
+
+# count Municipalities wise female samples in the metadata
+female_table <- sraruntable %>% filter(host_sex == "female") %>% 
+  count(Municipalities) %>%
+  rename(Female = n)
+
+# count Municipalities wise female samples in the metadata
+male_table <- sraruntable %>% filter(host_sex == "male") %>% 
+  count(Municipalities) %>%
+  rename(Male = n)
+
+# count Municipalities wise total samples in the metadata
+total_table <- sraruntable %>% count(Municipalities, sort = TRUE) %>%
+  rename(Total = n)
+
+# merge tables and remove NA
+final_table <- left_join(left_join(total_table, female_table), male_table)
+final_table[is.na(final_table)] = 0
+``` 
+
 # Figures
 
 ```{r sample-plot}
