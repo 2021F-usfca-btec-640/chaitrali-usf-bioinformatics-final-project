@@ -8,7 +8,7 @@ bibliography: references.bib
 params:
   gff_file_path: "data/metadata/sars_refgenome_annotation.gff"
   vcf_dir_path: "data/11_vcf_output_for_R"
-  sra_runtable_path: "data/00_sra_runtable/SraRunTable_PRJNA656695_short_example.txt"
+  sra_runtable_path: "data/00_sra_runtable/SraRunTable_Brazil.txt"
 ---
 
 ```{r setup, include = FALSE}
@@ -43,10 +43,18 @@ library("vcfR")
 library("ggplot2")
 library("dplyr")
 library("ggthemes")
+library("readr")
 
 # this loads all function files in the code/functions directory
 function_paths <- list.files("code/functions", full.names = TRUE)
 purrr::walk(function_paths, source)
+```
+
+```{r make directories}
+# create necessary directories to organize output
+dir.create(file.path("data", "processed_data"), showWarnings = FALSE)
+dir.create(file.path("output", "figures"), showWarnings = FALSE)
+dir.create(file.path("output", "tables"), showWarnings = FALSE)
 ```
 
 ```{r load-vcf-data}
@@ -54,7 +62,10 @@ purrr::walk(function_paths, source)
 # these are the output of the bash pipeline
 stacked_vcfs <- parse_tidy_and_stack_vcfs(
   vcf_dir_path = params$vcf_dir_path)
-# write.csv(stacked_vcfs, "stacked_vcfs.csv")
+
+# write Stacked VCF data to a csv file to processed data folder
+write_csv(stacked_vcfs, file.path("data", "processed_data", 
+                                         "stacked_vcfs.csv"))
 
 # load in the gff file with genome annotations for SARS-CoV-2
 gff <- read_gff(gff_file_path = params$gff_file_path)
@@ -64,19 +75,17 @@ gene_table <- extract_genes_from_gff(annotation_object = gff)
 
 # combine the stacked vcf table with the gene names and the metadata from
 # the sra runtable file
-print(params$sra_runtable_path)
 vcf_with_metadata <- add_genes_metadata_to_vcfstack(
   sra_runtable_path = params$sra_runtable_path,
   stacked_vcf = stacked_vcfs,
   cleaned_genes_table = gene_table)
-# write.csv(vcf_with_metadata, "vcf_with_metadata.csv")
 ```
 
 # Figures
 
 ```{r sample-plot}
 # create a plot of unique SNP locations within each gene across all samples
-vcf_with_metadata %>%
+figure1 <- vcf_with_metadata %>%
   filter(!is.na(gene)) %>% # get rid of SNPs not in gene regions
   group_by(gene, pos) %>%
   tally() %>% # this gives a column n for the number of gene by position
@@ -86,11 +95,15 @@ vcf_with_metadata %>%
              y = n)) +
     geom_col() +
     labs(title = "Count of distinct SNPs in Named SARS-CoV-2 Genes",
-         x = "Gene Name") +
+         x = "Gene Name", y = "Count") +
   theme_few() # get rid of the grey background
+
+  ggsave(figure1, filename = paste0("output/figures/figure1.png"))
+  figure1
 ```
 
 **Figure 1**: N and S genes have more unique SNPs in the set of samples analyzed.
+
 
 # Tables
 
@@ -106,5 +119,7 @@ gene_table %>%
 ```
 
 **Table 1**: Gene names, locations, and lengths in the SARS-CoV-2 genome. Higher SNP counts in the S and N genes may be related to the larger size of these genes.
+
+
 
 # Sources Cited
