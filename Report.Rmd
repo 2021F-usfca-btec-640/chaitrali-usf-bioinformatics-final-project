@@ -209,7 +209,8 @@ figure2 <- vcf_with_metadata %>%
   tally() %>%   # this gives a column n for the number of gene by position
   ggplot(aes(x = Municipalities, y = n, fill = host_sex)) +
       geom_bar(stat = "identity", position = "dodge") + # makes a bar plot
-      labs(title = "Count of total mutations in the set of samples analyzed", x = "Municipality", y = "Count",
+labs(title = "Count of total mutations in the set of samples analyzed",
+     x = "Municipality", y = "Count",
          fill = "Host Sex") + #add title, axis labels, legend label
       geom_col(aes(fill = host_sex), position = "dodge") +
       geom_text(aes(label = n), position = position_dodge(0.9), vjust = 1.5) +
@@ -273,8 +274,10 @@ figure4 <- vcf_with_metadata %>%
   tally() %>%
   # this gives a column n for the number of gene by position
   ggplot(aes(x = Municipalities, y = n, fill = host_sex)) +
-      geom_bar(stat = "identity", position = "dodge") + # makes a bar plot
-      labs(title = "Count of distinct SNPs in SARS-CoV-2 virus", x = "Municipality", y = "Count",
+      geom_bar(stat = "identity",
+               position = "dodge") + # makes a bar plot
+ labs(title = "Count of distinct SNPs in SARS-CoV-2 virus", x = "Municipality",
+      y = "Count",
            fill = "Host Sex") + #add title, axis labels, legend label
       geom_col(aes(fill = host_sex), position = "dodge") +
       geom_text(aes(label = n), position = position_dodge(0.9), vjust = 1.5) +
@@ -296,10 +299,8 @@ figure4
 #   filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
 #                                 "NOVA BASSANO", "SANTO ANTONIO DE PADUA",
 #                                 "XAMBIOA")) %>%
-#   tally()
 #
-# total_mutations <- left_join(total_mutations, final_table) %>%
-#                    mutate(normalized = round(n / total_count, 0))
+#
 
 total_snp <- vcf_with_metadata %>%
   group_by(Municipalities, pos) %>%
@@ -338,21 +339,7 @@ figure6 <- left_join(total_snp, tidybrazildata,
   # # add labels to the bars
   theme_few() # get rid of the grey background
 
-# g_legend<-function(a.gplot) {
-#   tmp <- ggplot_gtable(ggplot_build(a.gplot))
-#   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-#   legend <- tmp$grobs[[leg]]
-#   return(legend)}
 #
-# mylegend<-g_legend(p1)
-#
-# p3 <- grid.arrange(arrangeGrob(p1 + theme(legend.position="none"),
-#                          p2 + theme(legend.position="none"),
-#                          nrow=1),
-#              mylegend, nrow=2,heights=c(10, 1))
-#
-# ggsave(p3, filename = paste0("output/figures/figure6.png"))
-
 ggsave(figure6, filename = paste0("output/figures/figure6.png"))
 figure6
 ```
