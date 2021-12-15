@@ -2,7 +2,7 @@
 title: 'Analyzing SARS-CoV-2 in Brazil Based on Patient Geo Location and Sex'
 author: "Chaitrali Deshpande"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: html_document
+output: pdf_document
 csl: bioinformatics.csl
 bibliography: references.bib
 params:
@@ -34,35 +34,26 @@ I have worked on my project to analyze the impact of Delta Brazilian states and 
 I downloaded the Genome sequencing data of COVID-19 patients in municipalities of Brazil that were dominantly affected by COVID-19 states from the NCBI (National Center for Biotechnology Information) database.  It can be found on BioProject Resource database of NCBI titled 'SARS-CoV-2 genome sequencing Brazil' with Accession Number: PRJNA774631 and SRA Study: SRP343167.  It has total of 66 sequence data obtained using on Illumina platform from Brazil during June-July 2021.  
 
 ### Genome Sequence Processing Pipeline
-* 1. Retrieve the SARS-CoV-2 Sequencing Data (SraRunTable): 
-The metadata for Brazil was downloaded from the NCBI website.
-* 2. Download the raw sequences and check the quality of data:
-The downloaded raw sequences data was pushed through 'fasterq-dump', a program written 
-by NCBI to make the downoading of raw sequences feasible. The data was forked by
-'fastqc' and analysed for its quality.
-* 3. Eliminate low quality and unnecessary data:
-The raw sequencing dataset contains number of redundant data. To trim off the primers, delete low-quality base pairs and bad reads, 'trimmomatic' is used.
-* 4. Sorting the dataset:
-The trimmed data is mapped against the reference genome and index were created using 'bwa'. The data was sorted with the help of sam_and_bam tools.
-* 5. Data visualization and pearl script:
-To visualize the processed and mapped data, it is passed through pearl scripting. 
-'vcf' and 'igv' are used to view reads.
-* 6. Graphical analysis:
-I have used ggplots, ggthemes to create plots, geome, scales of my data to understand more about 
-the sequences.
-* 7. Analysing visuals and knitting:
-Using vcfR the data is passed to 'R' for visualization and knitted using 'knitter'
-to create the report of the analysis. 
 
-SraRuntable: Using SraRunTable, I downloaded SRA Run table from the internet.
-fasterq-dump: It was input to the program 'fasterq-dump' written by NCBI to download raw sequence data to the computer in a fast way.
-fastqc: I used forked 'fastqc' to check the quality of raw data.
-trimmomatic: The data was sent to 'trimmomatic' which is an adapter to trim off primers and also gets rid of low quality bases and bad reads.
-bwa (Burrows-Wheeler Aligner): The downloaded, cleaned and trimmed data was fed into 'bwa' (Burrows-Wheeler Aligner) that created the index and maps the short reads against the reference genome.
-sam_and_bam: Later the data goes to sam_and_bam files i.e. samtools and bamtools which sorted and processed the mapped reads. 
-vcf files: Then it was passed to pearl script which takes mapped and processed sam_and_bam files and processes it into 'vcf' files.
-igvR: The mapped and processed reads can be viewed in IGV.
-vcfR[@knaus2017vcfr]: It is passed to 'R' using the package 'vcfR' for the analysis and visualization.
+* Download of the metadata:
+Using SraRunTable I downloaded the metadata for Brazil from NCBI website. The downloaded raw sequences were pushed through 'fasterq-dump', a program written by NCBI to make the downloading of raw sequences feasible. The data was forked by
+'fastqc' and analyzed for its quality.
+
+* Eliminate low quality and unnecessary data:
+'fastqc' tool is used to check the quality of raw data. The raw sequencing dataset contains a number of redundant data. To trim off the primers, delete low-quality base pairs and bad reads, 'trimmomatic' is used. It is an adapter to trim off primers and also gets rid of low quality bases and bad reads.
+
+* Sorting the dataset:
+I used bwa (Burrows-Wheeler Aligner) that created the index and maps the short reads against the reference genome.  Later the data goes to sam_and_bam files i.e. samtools and bamtools which sorted and processed the mapped reads.
+
+* Data visualization and perl script:
+To visualize the processed and mapped data, it is passed through perl scripting which takes mapped and processed sam_and_bam files and processes it into 'vcf' files.
+
+* Graphical analysis:
+I have used ggplots, ggthemes to create plots, geome, scales of my data to understand more about the sequences. The mapped and processed reads can be viewed in IGV
+
+* Analyzing visuals and knitting:
+Using vcfR the data is passed to 'R' for visualization and knitted using 'knitter'
+to create the report of the analysis.
 
 ## Brazil COVID-19 Pandemic Statistics
 
@@ -385,10 +376,10 @@ ggsave(figure6, filename = paste0("output/figures/figure6.png"))
 figure6
 ```
 
-**Figure 7**: N and S genes have more unique SNPs in the set of samples analyzed.
+**Figure 6**: N and S genes have more unique SNPs in the set of samples analyzed.
 
 ```{r figure7}
-figure7 <- left_join(total_SNP, tidybrazildata,
+figure7 <- left_join(total_snp, tidybrazildata,
                      by = c("Municipalities" = "city")) %>%
   ggplot(aes(x = n, y = vaccination_rate)) +
   geom_point(aes(color = Municipalities)) +
@@ -398,8 +389,6 @@ figure7 <- left_join(total_SNP, tidybrazildata,
   # geom_text(aes(label = n), position = position_dodge(0.9), hjust=1.5) +
   # # add labels to the bars
   theme_few() # get rid of the grey background
-ggsave(figure7, filename = paste0("output/figures/figure7.png"))
-figure7
 
 # g_legend<-function(a.gplot) {
 #   tmp <- ggplot_gtable(ggplot_build(a.gplot))
@@ -415,40 +404,42 @@ figure7
 #              mylegend, nrow=2,heights=c(10, 1))
 #
 # ggsave(p3, filename = paste0("output/figures/figure6.png"))
+
+ggsave(figure7, filename = paste0("output/figures/figure7.png"))
+figure7
 ```
 
 **Figure 7**: N and S genes have more unique SNPs in the set of samples analyzed.
+
+\vspace{5mm}
 
 # Tables
 
 ```{r table1}
 # An example table to show the length of each gene using its start and end
-
-library(magrittr)
-library(kableExtra)
-
 gene_table %>%
   mutate(length = end - start) %>%
   select(gene_name, start, end, length) %>%
   knitr::kable(col.names = c("Gene Name", "Sequence Start",
                              "Sequence End", "Gene Length"),
-               align = "c",
-               caption = "Table 1: An example table caption it is long.",
-               booktabs = TRUE) %>%
-  kable_styling(bootstrap_options = "striped")
+                              align = "c")
 ```
 
 **Table 1**: Gene names, locations, and lengths in the SARS-CoV-2 genome. Higher SNP counts in the S and N genes may be related to the larger size of these genes.
+
+\vspace{5mm}
 
 ```{r table2}
 final_table %>%  knitr::kable(col.names =
                                    c("Municipality",
                                      "Total sample count",
                                      "Female Count", "Male Count"),
-                              align = "c") %>%
-  kable_styling(bootstrap_options = "striped")
+                              align = "c")
 ```
+
 **Table 2**: Gene names, locations, and lengths in the SARS-CoV-2 genome. Higher SNP counts in the S and N genes may be related to the larger size of these genes.
+
+\vspace{5mm}
 
 ```{r table3}
 # An example table to show the length of each gene using its start and end
@@ -456,8 +447,7 @@ tidybrazildata %>%  knitr::kable(col.names =
                                    c("Date", "Municipality",
                                      "Total Cases per 100k Inhabitants",
                                      "Fully Vaccination Rate (%)"),
-                                 align = "c") %>%
-  kable_styling(bootstrap_options = "striped")
+                                 align = "c")
 ```
 
 **Table 3**: Gene names, locations, and lengths in the SARS-CoV-2 genome. Higher SNP counts in the S and N genes may be related to the larger size of these genes.
