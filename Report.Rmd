@@ -2,7 +2,7 @@
 title: 'Analyzing SARS-CoV-2 in Brazil Based on Patient Geo Location and Sex'
 author: "Chaitrali Deshpande"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: pdf_document
+output: html_document
 csl: bioinformatics.csl
 bibliography: references.bib
 params:
@@ -20,46 +20,47 @@ knitr::opts_chunk$set(echo = FALSE,
 
 # Background and Overview
 
-The year 2020 was completely dominated by the COVID-19 pandemic.  It is still continuing to spread and mutate even after the discovery of numerous vaccines.  It has completely changed the way people interact with each other as the COVID-19 is an air-borne, contagious disease.  First discovered in Wuhan, China in December, 2019, COVID-19 is caused by severe acute respiratory syndrome coronovirus 2 (SARS-CoV-2).  Symptoms of COVID-19 include fever, chills, shortness of breath, exhaustion, headache, sore throat, nausea, and diarrhea.  The United States of America (US), India, and Brazil are the top three countries with the most COVID-19 cases and deaths caused by COVID-19.  The pandemic in Brazil is especially XXXXXXXXXXX given the smaller population of Brazil compared to US and India.
+The year 2020 was completely dominated by the COVID-19 pandemic. It is still continuing to spread and mutate even after the discovery of numerous vaccines. It has completely changed the way people interact with each other as the COVID-19 is an air-borne, contagious disease.  First discovered in Wuhan, China in December, 2019, COVID-19 is caused by severe acute respiratory syndrome coronovirus 2 (SARS-CoV-2). Symptoms of COVID-19 include fever, chills, shortness of breath, exhaustion, headache, sore throat, nausea, and diarrhea. The United States of America (US), India, and Brazil are the top three countries with the most COVID-19 cases and deaths caused by COVID-19.  The pandemic in Brazil is especially worrisome considering the smaller population of Brazil compared to US and India. Between January 3rd and December 10th, 2021, there were 22,167,781 confirmed cases of COVID-19 in Brazil, with 616,251 deaths.  Brazil was averaging over 1000 deaths per day by June 2021 [@de2020epidemiological]. The foreigners traveling from Europe to the different states of Brazil are considered the main reason for the widespread spread of the disease.  While the underdeveloped of north and northeast regions of Brazil are highly vulnerable, the metropolitan localities in Sao Paulo and Rio de Janeiro are significant contributors to the total number of cases and COVID-19 related deaths.
 
-Between January 3rd and December 10th, 2021, there were 22,167,781 confirmed cases of COVID-19 in Brazil, with 616,251 deaths.  Brazil was averaging over 1000 deaths per day by June 2021.  The foreigners traveling from Europe to the different states of Brazil are considered the main reason for the widespread spread of the disease.  While he underdeveloped of north and northeast regions of Brazil are highly vulnerable, the metropolitan states Sao Paulo and Rio de Janeiro contributed to XXXXXX. 
+I recently read an article on how Brazil is becoming the 'natural laboratory' for COVID-19 and also a breeding ground for new variants of SARS-CoV-2. The percentage of COVID-19 cases caused by the Delta (B.1.617.2) variant increased from 2.3 percent in June, 2021 to 23.6 percent in July, 2021. The significant increase in spread prompted the World Health Organization to call the Delta variant as 'variant of concern' [@lamarca2021genomic]. The Delta variant is considered to be more contagious than other variants as a consequence of high number of mutations to the spike protein of the virus that alters the amino acid sequence it encodes [@katella20215], [@callaway2021mutation].
 
-I recently read an article on how Brazil is becoming the 'natural laboratory' for the COVID-19 virus and also a breeding ground for new variants of the virus. The Delta (B.1.617.2) variant cases were increased from 2.3 percent in June to 23.6 percent in July. It is a nine fold increase in the cases. The cases were emerging and it became a variant of concern. I was intrigued by the information and chose to work with this data.[@lamarca2021genomic] This variant of concern (VOC) is said to be more contagious than other variants and targets the non-vaccinated people.[@katella20215] The Delta virus mutations are concerning since it mutates numerous time to the spike protein unlike other variants.[@callaway2021mutation] It has 13 mutations that alters the amino-acid sequences of the protein it encodes.
-I have worked on my project to analyze the impact of Delta Brazilian states and municipalities to find out more about how the they were affected by the Delta variants of SARS-CoV-2. This dataset includes timeframe from June, 2021 to July, 2021 when  the cases of Delta variant SARS-CoV-2 were on peak.
+Therefore, for the current study, I chose to work with SARS-CoV-2 genome sequencing data obtained between the time period of June-July 2021 and from the patients residing in municipalities in Brazil which are worst affected by COVID-19. The extracted genome sequencing data were compared to reference SARS-CoV-2 genome to count the gene mutations. The goal of the analysis was to evaluate if there is any correlation between number of distinct gene mutations and geographical location or sex of the patients.
 
 # Methods
 
 ## Genome Sequence Data 
 
-I downloaded the Genome sequencing data of COVID-19 patients in municipalities of Brazil that were dominantly affected by COVID-19 states from the NCBI (National Center for Biotechnology Information) database.  It can be found on BioProject Resource database of NCBI titled 'SARS-CoV-2 genome sequencing Brazil' with Accession Number: PRJNA774631 and SRA Study: SRP343167.  It has total of 66 sequence data obtained using on Illumina platform from Brazil during June-July 2021.  
+I downloaded the genome sequencing data of COVID-19 patients in municipalities of Brazil that were dominantly affected by COVID-19 states from the NCBI (National Center for Biotechnology Information) database.  It can be found on BioProject Resource database of NCBI titled 'SARS-CoV-2 genome sequencing Brazil' with Accession Number: PRJNA774631 and SRA Study: SRP343167.  It has total of 66 sequence data obtained using on Illumina platform from Brazil during June-July 2021.  
 
 ### Genome Sequence Processing Pipeline
 
-* Download of the metadata:
-Using SraRunTable I downloaded the metadata for Brazil from NCBI website. The downloaded raw sequences were pushed through 'fasterq-dump', a program written by NCBI to make the downloading of raw sequences feasible. The data was forked by
-'fastqc' and analyzed for its quality.
+The genome sequencing data extraction and processing was automated by the use of the Bash script. The steps followed in the pipeline are - 
 
-* Eliminate low quality and unnecessary data:
+* Download of the metadata:\newline
+Using SraRunTable, I downloaded the metadata for Brazil from NCBI website. The downloaded raw sequences were pushed through 'fasterq-dump', a program written by NCBI to make the downloading of raw sequences feasible.
+
+* Eliminate low quality and unnecessary data:\newline
 'fastqc' tool is used to check the quality of raw data. The raw sequencing dataset contains a number of redundant data. To trim off the primers, delete low-quality base pairs and bad reads, 'trimmomatic' is used. It is an adapter to trim off primers and also gets rid of low quality bases and bad reads.
 
-* Sorting the dataset:
+* Sorting the dataset:\newline
 I used bwa (Burrows-Wheeler Aligner) that created the index and maps the short reads against the reference genome.  Later the data goes to sam_and_bam files i.e. samtools and bamtools which sorted and processed the mapped reads.
 
-* Data visualization and perl script:
-To visualize the processed and mapped data, it is passed through perl scripting which takes mapped and processed sam_and_bam files and processes it into 'vcf' files.
+* Data visualization and perl script:\newline
+To visualize the processed and mapped data, it is passed through perl scripting which takes mapped and processed sam_and_bam files and processes it into 'vcf' files. The mapped and processed reads can be viewed in IGV.
 
+## Brazil COVID-19 Pandemic Statistics
+
+In addition to the genome data, I scoured the internet to obtain municipality-level statistical regarding the number of COVID-19 cases, deaths and vaccination rate in Brazil in the time period between June-July 2021.  The github repository [@CotaCovid19br2020] maintains temporal statistical data for COID-19 pandemic in Brazil.  I extracted the data relevant to this project i.e. data on 1st June, 2021 using excel and copied it in a csv file so that it can be imported by the R script.
+
+## R Packages
+The "vsf'files created by the 
 * Graphical analysis:
-I have used ggplots, ggthemes to create plots, geome, scales of my data to understand more about the sequences. The mapped and processed reads can be viewed in IGV
+I have used ggplots, ggthemes to create plots, geome, scales of my data to understand more about the sequences. 
 
 * Analyzing visuals and knitting:
 Using vcfR the data is passed to 'R' for visualization and knitted using 'knitter'
 to create the report of the analysis.
 
-## Brazil COVID-19 Pandemic Statistics
-
-In addition to the Genome data, I scoured the internet to obtain municipality-level statistical regarding the number of COVID-19 cases, deaths and vaccination rate in Brazil in the time period between June-July 2021.  The github repository [@CotaCovid19br2020] maintains temporal statistical data for COID-19 pandemic in Brazil.  I extracted the data relevant to this project i.e. data on 1st June, 2021 using excel and copied it in a csv file so that it can be imported by the R script.
-
-## R Packages
 tinytex: Using tinytex I have created pdf files for markdown.
 ggplot2[@ggplot2]: Using ggplot2 I have created graphics for my data analysis.
 ggthemes[@ggthemes]: Downloaded ggthemes to get an additional gnome, scales and ggplot for my analysis.
@@ -105,12 +106,13 @@ samples given were zero.
 The graph shows the information how SNP's have increased in the set of male sample analyzed.
 The data was calculated by dividing the count of genes by number of sample analyzed.
 
-* 5.  
-Total mutations divided by the number of sample:
+* 5. Total mutations divided by the number of sample:
 This graph shows the total mutations count is somewhat similar in male and female for Japeri municipality.
 The reason could be the  
 
 # Conclusion
+
+This analysis suggested that there is no correlation between 
 
 ```{r load-packages-and-functions}
 library("vcfR")
