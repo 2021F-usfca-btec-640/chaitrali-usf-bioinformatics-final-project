@@ -1,5 +1,5 @@
 ---
-title: 'Analyzing SARS-CoV-2 in Brazil Based on Patient Geo Location and Sex'
+title: 'Analyzing SARS-CoV-2 Genome Sequencing Data from Brazil Based on Patient Geolocation and Sex'
 author: "Chaitrali Deshpande"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = FALSE,
 
 The year 2020 was completely dominated by the COVID-19 pandemic. It is continuing to spread and mutate even after the discovery of numerous vaccines. It has completely changed the way people interact with each other as the COVID-19 is an air-borne, contagious disease. First discovered in Wuhan, China in December 2019, COVID-19 is caused by severe acute respiratory syndrome coronavirus 2 (SARS-CoV-2). Symptoms of COVID-19 include fever, chills, shortness of breath, exhaustion, headache, sore throat, nausea, and diarrhea. The United States of America (US), India, and Brazil are the top three countries with the most COVID-19 cases and deaths caused by COVID-19. The pandemic in Brazil is especially worrisome considering the smaller population of Brazil compared to the US and India. Between January 3rd and December 10th, 2021, there were 22,167,781 confirmed cases of COVID-19 in Brazil, with 616,251 deaths. Brazil was averaging over 1000 deaths per day by June 2021 [@de2020epidemiological]. The foreigners traveling from Europe to the different states of Brazil are considered the main reason for the widespread of the disease. While the underdeveloped north and northeast regions of Brazil are highly vulnerable, the metropolitan localities in Sao Paulo and Rio de Janeiro are significant contributors to the total number of cases and COVID-19 related deaths.
 
-I recently read an article on how Brazil is becoming the 'natural laboratory' for COVID-19 and also a breeding ground for new variants of SARS-CoV-2. The percentage of COVID-19 cases caused by the Delta (B.1.617.2) variant increased from 2.3 percent in June 2021 to 23.6 percent in July 2021. The significant increase in spread prompted the World Health Organization to call the Delta variant a 'variant of concern' [@lamarca2021genomic]. The Delta variant is considered to be more contagious than other variants as a consequence of the high number of mutations to the spike protein of the virus that alters the amino acid sequence it encodes [@katella20215], [@callaway2021mutation].
+I recently read an article [@agencia] on how Brazil is becoming the 'natural laboratory' for COVID-19 and also a breeding ground for new variants of SARS-CoV-2. The percentage of COVID-19 cases caused by the Delta (B.1.617.2) variant increased from 2.3 percent in June 2021 to 23.6 percent in July 2021. The significant increase in spread prompted the World Health Organization to call the Delta variant a 'variant of concern' [@lamarca2021genomic]. The Delta variant is considered to be more contagious than other variants as a consequence of the high number of mutations to the spike protein of the virus that alters the amino acid sequence it encodes [@katella20215], [@callaway2021mutation].
 
 Therefore, for the current study, I chose to work with SARS-CoV-2 genome sequencing data obtained between the period of June-July 2021 and from the patients residing in municipalities in Brazil that are worst affected by COVID-19. The extracted genome sequencing data were compared to reference the SARS-CoV-2 genome to count the gene mutations. The scope of this project is to study the correlation between the number of cases of geographic locations and the demography of the cities. The demography includes the sex of the host. The analysis was conducted to find out whether the gene mutation is affected by gender and geography.
 
@@ -34,23 +34,15 @@ I downloaded the genome sequencing data of COVID-19 patients in municipalities o
 
 ### Genome Sequence Processing Pipeline
 
-The genome sequencing data extraction and processing were automated by the use of the Bash script. The steps followed in the pipeline are -
+The genome sequencing data extraction and processing were automated by the use of the Bash script. 
 
-* Download of the metadata:
+* Download of the metadata: Using SraRunTable, I downloaded the metadata for Brazil from the NCBI website. The downloaded raw sequences were pushed through 'fasterq-dump', a program written by NCBI to make the downloading of raw sequences feasible.
 
-Using SraRunTable, I downloaded the metadata for Brazil from the NCBI website. The downloaded raw sequences were pushed through 'fasterq-dump', a program written by NCBI to make the downloading of raw sequences feasible.
+* Eliminate low quality and unnecessary data: 'fastqc' tool is used to check the quality of raw data. The raw sequencing dataset contains several redundant data. 'trimmomatic' is used to trim off the primers, delete low-quality base pairs and bad reads.
 
-* Eliminate low quality and unnecessary data:
+* Sorting the dataset: I used bwa (Burrows-Wheeler Aligner) that creates the index and maps the short reads against the reference genome. Later, the data is passed through samtools and bamtools, which sort and process the mapped reads, respectively.
 
-'fastqc' tool is used to check the quality of raw data. The raw sequencing dataset contains several redundant data. 'trimmomatic' is used to trim off the primers, delete low-quality base pairs and bad reads.
-
-* Sorting the dataset
-
-I used bwa (Burrows-Wheeler Aligner) that creates the index and maps the short reads against the reference genome. Later, the data is passed through samtools and bamtools, which sort and process the mapped reads, respectively.
-
-* Data visualization and Perl script
-
-To visualize the processed and mapped data, I used a Perl script which takes the bam files as input and processes them into 'vcf' files. The mapped and processed reads can be viewed in IGV.
+* Data visualization and Perl script: To visualize the processed and mapped data, I used a Perl script which takes the bam files as input and processes them into 'vcf' files. The mapped and processed reads can be viewed in IGV.
 
 ## Brazil COVID-19 Pandemic Statistics
 
@@ -58,7 +50,7 @@ In addition to the genome data, I scoured the internet to obtain municipality-le
 
 ## R Packages
 
-I imported the 'vcf files created by the the bash script in R to perform analysis and visualization. For this purpose, I used a variety of R tools and packages. I used readr[@readr] to read and write my data folder's csv files, while knittr and tinytex are used to create  final report files in pdf format from the R markdown file. I used janitor[@janitor] to clean up unnecessary data files in my data. Dplyr [@dplyr] and tidyr[@tidyr] are used to parse and categorize data. I  used ggplot2[@ggplot2] with ggthemes [@ggthemes] for the graphical analysis of the data and kableExtra [@kableExtra] to make the tables look nicer.
+I imported the 'vcf files created by the the bash script in R to perform analysis and visualization. For this purpose, I used a variety of R tools and packages. I used readr [@readr] to read and write my data folder's csv files, while knittr and tinytex are used to create  final report files in pdf format from the R markdown file. I used janitor [@janitor] to clean up unnecessary data files in my data. Dplyr [@dplyr] and tidyr [@tidyr] are used to parse and categorize data. I  used ggplot2 [@ggplot2] with ggthemes [@ggthemes] for the graphical analysis of the data and kableExtra [@kableExtra] to make the tables look nicer.
 
 # Results and Discussion
 
