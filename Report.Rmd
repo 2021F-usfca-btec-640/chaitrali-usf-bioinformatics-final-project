@@ -191,7 +191,7 @@ unique_SNP_count_within_each_gene <- vcf_with_metadata %>%
   theme_few() # get rid of the grey background
 
 # save figure
-ggsave(plot_unique_SNP_count_within_each_gene,
+ggsave(unique_SNP_count_within_each_gene,
        filename = paste0("output/figures/",
                          "unique_SNP_count_within_each_gene.png"))
 unique_SNP_count_within_each_gene
@@ -224,7 +224,7 @@ count_total_mutations_per_location_sex <- vcf_with_metadata %>%
                                    hjust = 1)) # makes the x-label vertical
 
 # save figure
-ggsave(plot_count_total_mutations_per_location_sex,
+ggsave(count_total_mutations_per_location_sex,
        filename = paste0("output/figures/",
                          "count_total_mutations_per_location_sex.png"))
 count_total_mutations_per_location_sex
