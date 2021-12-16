@@ -97,8 +97,9 @@ purrr::walk(function_paths, source)
 stacked_vcfs <- parse_tidy_and_stack_vcfs(vcf_dir_path = params$vcf_dir_path)
 
 # write Stacked VCF data to a csv file to processed data folder
-write_csv(stacked_vcfs, file.path("data", "processed_data",
-                                         "stacked_vcfs.csv"))
+write_csv(stacked_vcfs, file.path("data",
+                                  "processed_data",
+                                  "stacked_vcfs.csv"))
 
 # load in the gff file with genome annotations for SARS-CoV-2
 gff <- read_gff(gff_file_path = params$gff_file_path)
@@ -118,8 +119,9 @@ vcf_with_metadata <- vcf_with_metadata %>%
   tidyr::separate(geo_loc_name, c(NA, "Municipalities"), sep = ",")
 
 # write combined stacked vcf and metadata to output folder
-write_csv(vcf_with_metadata, file.path("data", "processed_data",
-                                              "vcf_with_metadata.csv"))
+write_csv(vcf_with_metadata, file.path("data",
+                                       "processed_data",
+                                       "vcf_with_metadata.csv"))
 ```
 
 ```{r load-sra-data}
@@ -151,12 +153,14 @@ final_table[is.na(final_table)] <- 0
 ``` 
 
 ```{r load-brazil-data}
-brazildata <- read_csv(file.path("data", "raw_data",
-                                  "brazil_covid_data_citywise.csv"))
+brazildata <- read_csv(file.path("data",
+                                 "raw_data",
+                                 "brazil_covid_data_citywise.csv"))
 
-tidybrazildata <- brazildata[, c("date", "city",
-                                "totalCases_per_100k_inhabitants",
-                                "vaccination_rate")]
+tidybrazildata <- brazildata[, c("date",
+                                 "city",
+                                 "totalCases_per_100k_inhabitants",
+                                 "vaccination_rate")]
 ```
 
 # Figures
@@ -169,15 +173,20 @@ figure1 <- vcf_with_metadata %>%
   tally() %>% # this gives a column n for the number of gene by position
   group_by(gene, host_sex) %>%
   tally() %>% # this collapses that down to the number of unique SNP locations
-  ggplot(aes(x = gene, y = n, fill = host_sex)) +
-    geom_bar(stat = "identity", position = "dodge") + # makes a bar plot
-    labs(title = "Count of distinct SNPs in named SARS-CoV-2 genes",
-         x = "Gene Name", y = "Count", fill = "Host sex") +
-            #add title, axis labels, legend label
-    geom_col(aes(fill = host_sex), position = "dodge") +
-    geom_text(aes(label = n), position = position_dodge(0.9), vjust = 1.5) +
+  ggplot(aes(x = gene,
+             y = n,
+             fill = host_sex)) +
+  geom_bar(stat = "identity",
+           position = "dodge") + # makes a bar plot
+  labs(title = "Count of distinct SNPs in named SARS-CoV-2 genes",
+       x = "Gene Name",
+       y = "Count",
+       fill = "Host sex") +  #add title, axis labels, legend label
+  geom_col(aes(fill = host_sex), position = "dodge") +
+  geom_text(aes(label = n), position = position_dodge(0.9), vjust = 1.5) +
         # add labels to the bars
-    theme_few() # get rid of the grey background
+  theme_few() # get rid of the grey background
+
 ggsave(figure1, filename = paste0("output/figures/figure1.png"))
 figure1
 ```
@@ -193,16 +202,21 @@ figure2 <- vcf_with_metadata %>%
                                 "XAMBIOA")) %>%
   tally() %>%   # this gives a column n for the number of gene by position
   ggplot(aes(x = Municipalities, y = n, fill = host_sex)) +
-      geom_bar(stat = "identity", position = "dodge") + # makes a bar plot
-labs(title = "Count of total mutations in the set of samples analyzed",
-     x = "Municipality", y = "Count",
-         fill = "Host Sex") + #add title, axis labels, legend label
-      geom_col(aes(fill = host_sex), position = "dodge") +
-      geom_text(aes(label = n), position = position_dodge(0.9), vjust = 1.5) +
-        # add labels to the bars
-      theme_few() +  # get rid of the grey background
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-        # makes the x-label vertical
+  geom_bar(stat = "identity",
+           position = "dodge") + # makes a bar plot
+  labs(title = "Count of total mutations in the set of samples analyzed",
+       x = "Municipality",
+       y = "Count",
+       fill = "Host Sex") + #add title, axis labels, legend label
+  geom_col(aes(fill = host_sex), position = "dodge") +
+  geom_text(aes(label = n),
+            position = position_dodge(0.9),
+            vjust = 1.5) +  # add labels to the bars
+  theme_few() +  # get rid of the grey background
+  theme(axis.text.x = element_text(angle = 90,
+                                   vjust = 0.5,
+                                   hjust = 1)) # makes the x-label vertical
+
 ggsave(figure2, filename = paste0("output/figures/figure2.png"))
 figure2
 ```
@@ -219,28 +233,33 @@ total_mutations_sex <- vcf_with_metadata %>%
   tally() %>%
   rename(mutation_count = n)
   
-total_mutations_sex <- rbind(left_join(total_mutations_sex %>%
-                              filter(host_sex == "male"), male_table),
-                             left_join(total_mutations_sex %>%
-                              filter(host_sex == "female"), female_table)) %>%
-                  mutate(sample_count = coalesce(male_count, female_count)) %>%
-                  mutate(normalized = round(mutation_count / sample_count, 0))
+total_mutations_sex <-
+  rbind(left_join(total_mutations_sex %>%
+                    filter(host_sex == "male"), male_table),
+        left_join(total_mutations_sex %>%
+                    filter(host_sex == "female"), female_table)) %>%
+  mutate(sample_count = coalesce(male_count, female_count)) %>%
+  mutate(normalized = round(mutation_count / sample_count, 0))
 
 # this gives a column n for the number of gene by position
 figure3 <- ggplot(total_mutations_sex,
                   aes(x = Municipalities, y = normalized, fill = host_sex)) +
   geom_bar(stat = "identity", position = "dodge") + # makes a bar plot
   labs(title = "Total mutations divided by number of samples",
-       x = "Municipality", y = "Count", fill = "Host Sex") +
-          #adds title, axis labels, legend label
-  geom_col(aes(fill = host_sex), width = 0.5, position = position_dodge(0.5)) +
+       x = "Municipality",
+       y = "Count",
+       fill = "Host Sex") +  #adds title, axis labels, legend label
+  geom_col(aes(fill = host_sex),
+           width = 0.5,
+           position = position_dodge(0.5)) +
   geom_text(aes(label = normalized),
             position = position_dodge(0.9),
-            vjust = 1.5) +
-      # add labels to the bars
+            vjust = 1.5) +  # add labels to the bars
   theme_few() +  # get rid of the grey background
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-      # makes the x-label vertical
+  theme(axis.text.x = element_text(angle = 90,
+                                   vjust = 0.5,
+                                   hjust = 1))  # makes the x-label vertical
+
 ggsave(figure3, filename = paste0("output/figures/figure3.png"))
 figure3
 ```
@@ -256,20 +275,23 @@ figure4 <- vcf_with_metadata %>%
                                 "XAMBIOA")) %>%
   tally() %>%
   group_by(Municipalities, host_sex) %>%
-  tally() %>%
-  # this gives a column n for the number of gene by position
+  tally() %>%  # this gives a column n for the number of gene by position
   ggplot(aes(x = Municipalities, y = n, fill = host_sex)) +
       geom_bar(stat = "identity",
                position = "dodge") + # makes a bar plot
- labs(title = "Count of distinct SNPs in SARS-CoV-2 virus", x = "Municipality",
+ labs(title = "Count of distinct SNPs in SARS-CoV-2 virus",
+      x = "Municipality",
       y = "Count",
-           fill = "Host Sex") + #add title, axis labels, legend label
-      geom_col(aes(fill = host_sex), position = "dodge") +
-      geom_text(aes(label = n), position = position_dodge(0.9), vjust = 1.5) +
-      # add labels to the bars
-      theme_few() +  # get rid of the grey background
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-        # makes the x-label vertical
+      fill = "Host Sex") + #add title, axis labels, legend label
+  geom_col(aes(fill = host_sex), position = "dodge") +
+  geom_text(aes(label = n),
+            position = position_dodge(0.9),
+            vjust = 1.5) +      # add labels to the bars
+  theme_few() +                 # get rid of the grey background
+  theme(axis.text.x = element_text(angle = 90,
+                                   vjust = 0.5,
+                                   hjust = 1))  # makes the x-label vertical
+
 ggsave(figure4, filename = paste0("output/figures/figure4.png"))
 figure4
 ```
@@ -278,15 +300,6 @@ figure4
 
 ```{r figure5}
 # create a plot of unique SNP locations within each gene across different sex
-
-# total_mutations <- vcf_with_metadata %>%
-#   group_by(Municipalities) %>%
-#   filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
-#                                 "NOVA BASSANO", "SANTO ANTONIO DE PADUA",
-#                                 "XAMBIOA")) %>%
-#
-#
-
 total_snp <- vcf_with_metadata %>%
   group_by(Municipalities, pos) %>%
   filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
@@ -298,14 +311,14 @@ total_snp <- vcf_with_metadata %>%
 
 figure5 <- left_join(total_snp, tidybrazildata,
                      by = c("Municipalities" = "city")) %>%
-  ggplot(aes(x = n, y = totalCases_per_100k_inhabitants)) +
+  ggplot(aes(x = n,
+             y = totalCases_per_100k_inhabitants)) +
   geom_point(aes(color = Municipalities)) +
   labs(title = "Total COVID-19 cases vs. count of distinct SNPs",
-       x = "Count of distinct SNPs", y = "Total cases per 100k inhabitants") +
-      #add title, axis labels, legend label
-    # geom_text(aes(label = n), position = position_dodge(0.9), hjust=1.5) +
-    # # add labels to the bars
+       x = "Count of distinct SNPs",
+       y = "Total cases per 100k inhabitants") + #add title and labels
   theme_few() # get rid of the grey background
+
 ggsave(figure5, filename = paste0("output/figures/figure5.png"))
 figure5
 ```
@@ -318,13 +331,10 @@ figure6 <- left_join(total_snp, tidybrazildata,
   ggplot(aes(x = n, y = vaccination_rate)) +
   geom_point(aes(color = Municipalities)) +
   labs(title = "Vaccination rate vs. vs. count of distinct SNPs",
-       x = "Count of distinct SNPs", y = "Vaccination rate (%)") +
-    #add title, axis labels, legend label
-  # geom_text(aes(label = n), position = position_dodge(0.9), hjust=1.5) +
-  # # add labels to the bars
+       x = "Count of distinct SNPs",
+       y = "Vaccination rate (%)") +  # add title, axis labels, legend label
   theme_few() # get rid of the grey background
 
-#
 ggsave(figure6, filename = paste0("output/figures/figure6.png"))
 figure6
 ```
