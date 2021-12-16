@@ -197,7 +197,7 @@ ggsave(unique_SNP_count_within_each_gene,
 unique_SNP_count_within_each_gene
 ```
 
-**Figure 1**: Significant difference in the count of distinct SNPs in gene S found in female and male hosts. Males seem to be more vulnarable.  
+**Figure 1**: Significant difference in the count of distinct SNPs in gene S found in female and male hosts. Males seem to be more vulnerable.  
 
 ```{r plot-count-total-mutations-per-location-sex}
 # create a plot of total mutations for different host sex across municipalities
@@ -230,7 +230,7 @@ ggsave(count_total_mutations_per_location_sex,
 count_total_mutations_per_location_sex
 ```
 
-**Figure 2**: Significant differences between male and female hosts as well as municipalities. But this might not be a fair comparison due to different number of samples analyzed.
+**Figure 2**: Significant differences between male and female hosts as well as municipalities. But this might not be a fair comparison due to the different number of samples analyzed.
 
 ```{r plot-average-total-mutations-count-per-location-sex}
 # calculate total mutations
@@ -277,7 +277,7 @@ ggsave(average_mutations_count_per_location_sex,
 average_mutations_count_per_location_sex
 ```
 
-**Figure 3**: Better to compare average mutations per number of samples. This illustrates no correlation between mutations and geographic location or host sex. 
+**Figure 3**: Better to compare average mutations per number of samples. This plot illustrates no correlation between mutations and geographic location or host sex. 
 
 ```{r plot-distinct-SNPs-count-per-location-sex}
 # create a plot of total count of distinct per location and host sex
@@ -342,7 +342,7 @@ ggsave(covid_cases_against_distinct_SNP_count,
 covid_cases_against_distinct_SNP_count
 ```
 
-**Figure 5**: No correlation was found between COVID-19 spread and gene mutations.
+**Figure 5**: No correlation between COVID-19 spread and gene mutations.
 
 ```{r plot-vaccination-rate-against-distinct-SNP-count}
 # create a plot of vaccination rate on June 1, 2021 vs. distinct SNP count
@@ -362,7 +362,7 @@ ggsave(vaccination_rate_against_distinct_SNP_count,
 vaccination_rate_against_distinct_SNP_count
 ```
 
-**Figure 6**:The vaccination rate doesn't seem to have any effect on dinstinct SNP count.
+**Figure 6**: The vaccination rate doesn't seem to affect distinct SNP count.
 
 \vspace{5mm}
 
@@ -376,7 +376,7 @@ final_table %>%  knitr::kable(col.names =
                                      "Female samples", "Male sample"),
                               align = "c")
 ```
-**Table 1**: Number of genome sequences from different municipalities per host sex. The municipalities where only male or female sample data was available were excluded from the analysis.  
+**Table 1**: Number of genome sequences from different municipalities per host sex. I excluded the municipalities where only a single sample was available from the analysis. 
 
 \vspace{5mm}
 
@@ -388,7 +388,7 @@ tidybrazildata %>%  knitr::kable(col.names =
                                      "Fully Vaccination Rate (%)"),
                                  align = "c")
 ```
-**Table 2**: Total number of cases per 100k inhabitants and vaccinations rates in the municipalities under study as of 1st June, 2021 [@CotaCovid19br2020].
+**Table 2**: The Total number of cases per 100k inhabitants and vaccinations rates in the municipalities under investigation as of June 1st, 2021 [@CotaCovid19br2020].
 
 \vspace{5mm}
 
