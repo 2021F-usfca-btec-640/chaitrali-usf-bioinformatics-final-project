@@ -91,13 +91,6 @@ function_paths <- list.files("code/functions", full.names = TRUE)
 purrr::walk(function_paths, source)
 ```
 
-```{r make-directories}
-# create necessary directories to organize output
-dir.create(file.path("data", "processed_data"), showWarnings = FALSE)
-dir.create(file.path("output", "figures"), showWarnings = FALSE)
-dir.create(file.path("output", "tables"), showWarnings = FALSE)
-```
-
 ```{r load-vcf-data}
 # load in, tidy, and stack all of the VCF files in the target directory
 # these are the output of the bash pipeline
@@ -120,7 +113,7 @@ vcf_with_metadata <- add_genes_metadata_to_vcfstack(
   stacked_vcf = stacked_vcfs,
   cleaned_genes_table = gene_table)
 
-#Clean geo location name
+#Clean geolocation name
 vcf_with_metadata <- vcf_with_metadata %>%
   tidyr::separate(geo_loc_name, c(NA, "Municipalities"), sep = ",")
 
