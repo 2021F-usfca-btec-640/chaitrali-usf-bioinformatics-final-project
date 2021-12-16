@@ -64,7 +64,7 @@ Figure 1 illustrates the number of distinct Single Nucleotide Polymorphisms (SNP
 
 I found it interesting to note that the number of distinct SNPs in gene S are more than twofold higher in males compared to females. We can say that males are more susceptible to COVID-19 and provide a favorable host. This is also evident from the higher number of COVID-19 infection among males than females, globally. 
 
-Figure 2 compares the number of total mutations between male and female hosts from the different municipalities. There appears to be significant difference between the mutation rate in the genome of virus from female and male host. However, I also observed that the number of sample from female host and male host are significantly different for many municipalities (Table 1). That would skew the comparison between the total count of mutations for male and females, the total mutation count is divided by the number of sample for that host sex. This normalized count plotted in Figure 3 provide a better comparison and clearly depicts that normalized count are approximately similar in male and female in municipalities. 
+Figure 2 compares the number of total mutations between male and female hosts from the different municipalities. There appears to be significant difference between the mutation rate in the genome of virus from female and male host. However, I also observed that the number of sample from female host and male host are significantly different for many municipalities (Table 1). That would skew the comparison between the total count of mutations for male and females, the total mutation count is divided by the number of sample for that host sex. This averaged count plotted in Figure 3 provide a better comparison and clearly depicts that normalized count are approximately similar in male and female in municipalities. 
 
 Figure 4 compares the number of distinct SNPs observed in genome sequences from male and female hosts residing in different municipalities. While, the difference in the count ranges between from 2 to 6 among the municipalities; this difference is small compared to the total number to make any conclusive remarks about this correlation. Please note that, in this figure the SNPs are included regardless of the gene they belog to. Thus, the number of distinct SNPs are much higher compared to Figure 1.   
 From figure 2 through 4, we can conclude that sex or geographic location is not a factor for extent of SARS-CoV-2 mutations observed in the genome sequences studied here. 
@@ -153,10 +153,12 @@ final_table[is.na(final_table)] <- 0
 ``` 
 
 ```{r load-brazil-data}
+# read COVID statistics of Brazil on June 1, 2021
 brazildata <- read_csv(file.path("data",
                                  "raw_data",
                                  "brazil_covid_data_citywise.csv"))
 
+# keep only relevant columns
 tidybrazildata <- brazildata[, c("date",
                                  "city",
                                  "totalCases_per_100k_inhabitants",
@@ -183,10 +185,12 @@ unique_SNP_count_within_each_gene <- vcf_with_metadata %>%
        y = "Count",
        fill = "Host sex") +  #add title, axis labels, legend label
   geom_col(aes(fill = host_sex), position = "dodge") +
-  geom_text(aes(label = n), position = position_dodge(0.9), vjust = 1.5) +
-        # add labels to the bars
+  geom_text(aes(label = n),
+            position = position_dodge(0.9),
+            vjust = 1.5) + # add labels to the bars
   theme_few() # get rid of the grey background
 
+# save figure
 ggsave(plot_unique_SNP_count_within_each_gene,
        filename = paste0("output/figures/",
                          "unique_SNP_count_within_each_gene.png"))
@@ -196,13 +200,13 @@ unique_SNP_count_within_each_gene
 **Figure 1**: Significant difference in the count of distinct SNPs in gene S found in female and male hosts. Males seem to be more vulnarable.  
 
 ```{r plot-count-total-mutations-per-location-sex}
-# create a plot of unique SNP locations within each gene across different sex
+# create a plot of total mutations for different host sex across municipalities
 count_total_mutations_per_location_sex <- vcf_with_metadata %>%
   group_by(Municipalities, host_sex) %>%
   filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
                                 "NOVA BASSANO", "SANTO ANTONIO DE PADUA",
                                 "XAMBIOA")) %>%
-  tally() %>%   # this gives a column n for the number of gene by position
+  tally() %>%   # this gives a count of number of mutations for host sex
   ggplot(aes(x = Municipalities, y = n, fill = host_sex)) +
   geom_bar(stat = "identity",
            position = "dodge") + # makes a bar plot
@@ -219,6 +223,7 @@ count_total_mutations_per_location_sex <- vcf_with_metadata %>%
                                    vjust = 0.5,
                                    hjust = 1)) # makes the x-label vertical
 
+# save figure
 ggsave(plot_count_total_mutations_per_location_sex,
        filename = paste0("output/figures/",
                          "count_total_mutations_per_location_sex.png"))
@@ -227,8 +232,8 @@ count_total_mutations_per_location_sex
 
 **Figure 2**: Significant differences between male and female hosts as well as municipalities. But this might not be a fair comparison due to different number of samples analyzed.
 
-```{r plot-normalized-total-mutations-count-per-location-sex}
-# create a plot of unique SNP locations within each gene across different sex
+```{r plot-average-total-mutations-count-per-location-sex}
+# calculate total mutations
 total_mutations_sex <- vcf_with_metadata %>%
   group_by(Municipalities, host_sex) %>%
   filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
@@ -236,17 +241,18 @@ total_mutations_sex <- vcf_with_metadata %>%
                                 "XAMBIOA")) %>%
   tally() %>%
   rename(mutation_count = n)
-  
+
+# divide total mutations by number of samples
 total_mutations_sex <-
   rbind(left_join(total_mutations_sex %>%
-                    filter(host_sex == "male"), male_table),
+                    filter(host_sex == "male"), male_table), # merging tables
         left_join(total_mutations_sex %>%
                     filter(host_sex == "female"), female_table)) %>%
-  mutate(sample_count = coalesce(male_count, female_count)) %>%
+  mutate(sample_count = coalesce(male_count, female_count)) %>% # division
   mutate(normalized = round(mutation_count / sample_count, 0))
 
-# this gives a column n for the number of gene by position
-normalized_mutations_count_per_location_sex <- ggplot(total_mutations_sex,
+# plot of average total mutations per location and host sex
+average_mutations_count_per_location_sex <- ggplot(total_mutations_sex,
                   aes(x = Municipalities, y = normalized, fill = host_sex)) +
   geom_bar(stat = "identity", position = "dodge") + # makes a bar plot
   labs(title = "Total mutations divided by number of samples",
@@ -264,16 +270,17 @@ normalized_mutations_count_per_location_sex <- ggplot(total_mutations_sex,
                                    vjust = 0.5,
                                    hjust = 1))  # makes the x-label vertical
 
-ggsave(normalized_mutations_count_per_location_sex,
+# save figure
+ggsave(average_mutations_count_per_location_sex,
        filename = paste0("output/figures/",
                       "normalized_mutations_count_per_location_sex.png"))
-normalized_mutations_count_per_location_sex
+average_mutations_count_per_location_sex
 ```
 
 **Figure 3**: Better to compare average mutations per number of samples. This illustrates no correlation between mutations and geographic location or host sex. 
 
 ```{r plot-distinct-SNPs-count-per-location-sex}
-# create a plot of unique SNP locations within each gene across different sex
+# create a plot of total count of distinct per location and host sex
 distinct_snp_count_per_location_sex <- vcf_with_metadata %>%
   group_by(Municipalities, host_sex, pos) %>%
   filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
@@ -298,6 +305,7 @@ distinct_snp_count_per_location_sex <- vcf_with_metadata %>%
                                    vjust = 0.5,
                                    hjust = 1))  # makes the x-label vertical
 
+# save figure
 ggsave(distinct_snp_count_per_location_sex,
        filename = paste0("output/figures/",
                          "distinct_snp_count_per_location_sex.png"))
@@ -307,7 +315,7 @@ distinct_snp_count_per_location_sex
 **Figure 4**: The count of distinct SNPs in the samples analyzed are similar irrespective of host sex and geographic location. 
 
 ```{r plot-COVID-cases-against-distinct-SNP-count}
-# create a plot of unique SNP locations within each gene across different sex
+# create a plot of total COVID cases on June 1, 2021 vs. distinct SNP count
 total_snp <- vcf_with_metadata %>%
   group_by(Municipalities, pos) %>%
   filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
@@ -327,6 +335,7 @@ covid_cases_against_distinct_SNP_count <- left_join(total_snp, tidybrazildata,
        y = "Total cases per 100k inhabitants") + #add title and labels
   theme_few() # get rid of the grey background
 
+# save figure
 ggsave(covid_cases_against_distinct_SNP_count,
        filename = paste0("output/figures/",
                          "COVID_cases_against_distinct_SNP_count.png"))
@@ -336,6 +345,7 @@ covid_cases_against_distinct_SNP_count
 **Figure 5**: No correlation was found between COVID-19 spread and gene mutations.
 
 ```{r plot-vaccination-rate-against-distinct-SNP-count}
+# create a plot of vaccination rate on June 1, 2021 vs. distinct SNP count
 vaccination_rate_against_distinct_SNP_count <- 
   left_join(total_snp, tidybrazildata, by = c("Municipalities" = "city")) %>%
   ggplot(aes(x = n, y = vaccination_rate)) +
@@ -345,6 +355,7 @@ vaccination_rate_against_distinct_SNP_count <-
        y = "Vaccination rate (%)") +  # add title, axis labels, legend label
   theme_few() # get rid of the grey background
 
+# save figure
 ggsave(vaccination_rate_against_distinct_SNP_count,
        filename = paste0("output/figures/",
                          "vaccination_rate_against_distinct_SNP_count.png"))
@@ -358,6 +369,7 @@ vaccination_rate_against_distinct_SNP_count
 # Tables
 
 ```{r list-available-genome-sequences-per-municipalities-per-host-sex}
+# table to list details of genome sequencing data
 final_table %>%  knitr::kable(col.names =
                                    c("Municipality",
                                      "Total samples",
@@ -369,7 +381,7 @@ final_table %>%  knitr::kable(col.names =
 \vspace{5mm}
 
 ```{r list-brazil-covid-statistic-06-01-2021}
-# An example table to show the length of each gene using its start and end
+# table to show brazil COVID statistic
 tidybrazildata %>%  knitr::kable(col.names =
                                    c("Date", "Municipality",
                                      "Total Cases per 100k Inhabitants",
@@ -381,7 +393,7 @@ tidybrazildata %>%  knitr::kable(col.names =
 \vspace{5mm}
 
 ```{r list-SARS-CoV-2-gene-names-locations-lengths}
-# An example table to show the length of each gene using its start and end
+# table to show the length of each gene using its start and end
 gene_table %>%
   mutate(length = end - start) %>%
   select(gene_name, start, end, length) %>%
