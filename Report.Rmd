@@ -24,7 +24,7 @@ The year 2020 was completely dominated by the COVID-19 pandemic. It is continuin
 
 I recently read an article [@agencia] on how Brazil is becoming the 'natural laboratory' for COVID-19 and also a breeding ground for new variants of SARS-CoV-2. The percentage of COVID-19 cases caused by the Delta (B.1.617.2) variant increased from 2.3 percent in June 2021 to 23.6 percent in July 2021. The significant increase in spread prompted the World Health Organization to call the Delta variant a 'variant of concern' [@lamarca2021genomic]. The Delta variant is considered to be more contagious than other variants as a consequence of the high number of mutations to the spike protein of the virus that alters the amino acid sequence it encodes [@katella20215], [@callaway2021mutation].
 
-Therefore, for the current study, I chose to work with SARS-CoV-2 genome sequencing data obtained between the period of June-July 2021 and from the patients residing in municipalities in Brazil that are worst affected by COVID-19. The extracted genome sequencing data were compared to reference the SARS-CoV-2 genome to count the gene mutations. The scope of this project is to study the correlation between the number of cases of geographic locations and the demography of the cities. The demography includes the sex of the host. The analysis was conducted to find out whether the gene mutation is affected by gender and geography.
+Therefore, for the current study, I chose to work with SARS-CoV-2 genome sequencing data obtained between the period of June-July 2021 and from the patients residing in municipalities in Brazil that are worst affected by COVID-19. The extracted genome sequencing data were compared to reference the SARS-CoV-2 genome to count the gene mutations. The scope of this project is to study the correlation between the number of cases of geographic locations and the demography of the cities. The demography includes the sex of the host. The analysis was conducted to find out whether the gene mutations are affected by gender and geography. Though this study could not reach to any conclusive finding due to the limited number of genome sequences available from a shorter timeframe, it builds a solid platform for future studies when more data becomes available. 
 
 # Methods
 
@@ -34,7 +34,7 @@ I downloaded the genome sequencing data of COVID-19 patients in municipalities o
 
 ### Genome Sequence Processing Pipeline
 
-The genome sequencing data extraction and processing were automated by the use of the Bash script. 
+The genome sequencing data extraction and processing were automated by the use of the Bash script. The Bash script performs following tasks in sequence while saving the processed files at every step for future use.
 
 * Download of the metadata: Using SraRunTable, I downloaded the metadata for Brazil from the NCBI website. The downloaded raw sequences were pushed through 'fasterq-dump', a program written by NCBI to make the downloading of raw sequences feasible.
 
@@ -114,7 +114,7 @@ vcf_with_metadata <- add_genes_metadata_to_vcfstack(
   stacked_vcf = stacked_vcfs,
   cleaned_genes_table = gene_table)
 
-#Clean geolocation name
+# Clean geolocation name
 vcf_with_metadata <- vcf_with_metadata %>%
   tidyr::separate(geo_loc_name, c(NA, "Municipalities"), sep = ",")
 
@@ -165,9 +165,9 @@ tidybrazildata <- brazildata[, c("date",
 
 # Figures
 
-```{r figure1}
+```{r plot-unique-SNP-count-within-each-gene}
 # create a plot of unique SNP locations within each gene across different sex
-figure1 <- vcf_with_metadata %>%
+unique_SNP_count_within_each_gene <- vcf_with_metadata %>%
   filter(!is.na(gene)) %>% # get rid of SNPs not in gene regions
   group_by(gene, host_sex, pos) %>%
   tally() %>% # this gives a column n for the number of gene by position
@@ -187,15 +187,17 @@ figure1 <- vcf_with_metadata %>%
         # add labels to the bars
   theme_few() # get rid of the grey background
 
-ggsave(figure1, filename = paste0("output/figures/figure1.png"))
-figure1
+ggsave(plot_unique_SNP_count_within_each_gene,
+       filename = paste0("output/figures/",
+                         "unique_SNP_count_within_each_gene.png"))
+unique_SNP_count_within_each_gene
 ```
 
 **Figure 1**: Significant difference in the count of distinct SNPs in gene S found in female and male hosts. Males seem to be more vulnarable.  
 
-```{r figure2}
+```{r plot-count-total-mutations-per-location-sex}
 # create a plot of unique SNP locations within each gene across different sex
-figure2 <- vcf_with_metadata %>%
+count_total_mutations_per_location_sex <- vcf_with_metadata %>%
   group_by(Municipalities, host_sex) %>%
   filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
                                 "NOVA BASSANO", "SANTO ANTONIO DE PADUA",
@@ -217,13 +219,15 @@ figure2 <- vcf_with_metadata %>%
                                    vjust = 0.5,
                                    hjust = 1)) # makes the x-label vertical
 
-ggsave(figure2, filename = paste0("output/figures/figure2.png"))
-figure2
+ggsave(plot_count_total_mutations_per_location_sex,
+       filename = paste0("output/figures/",
+                         "count_total_mutations_per_location_sex.png"))
+count_total_mutations_per_location_sex
 ```
 
-**Figure 2**: Significant differences between male and female hosts as well as municipalities. But, may not be a fair comparison due to different number of samples analyzed.
+**Figure 2**: Significant differences between male and female hosts as well as municipalities. But this might not be a fair comparison due to different number of samples analyzed.
 
-```{r figure3}
+```{r plot-normalized-total-mutations-count-per-location-sex}
 # create a plot of unique SNP locations within each gene across different sex
 total_mutations_sex <- vcf_with_metadata %>%
   group_by(Municipalities, host_sex) %>%
@@ -242,7 +246,7 @@ total_mutations_sex <-
   mutate(normalized = round(mutation_count / sample_count, 0))
 
 # this gives a column n for the number of gene by position
-figure3 <- ggplot(total_mutations_sex,
+normalized_mutations_count_per_location_sex <- ggplot(total_mutations_sex,
                   aes(x = Municipalities, y = normalized, fill = host_sex)) +
   geom_bar(stat = "identity", position = "dodge") + # makes a bar plot
   labs(title = "Total mutations divided by number of samples",
@@ -260,15 +264,17 @@ figure3 <- ggplot(total_mutations_sex,
                                    vjust = 0.5,
                                    hjust = 1))  # makes the x-label vertical
 
-ggsave(figure3, filename = paste0("output/figures/figure3.png"))
-figure3
+ggsave(normalized_mutations_count_per_location_sex,
+       filename = paste0("output/figures/",
+                      "normalized_mutations_count_per_location_sex.png"))
+normalized_mutations_count_per_location_sex
 ```
 
-**Figure 3**: More fair comparison shows no correlation between mutations and geographic location or host sex. 
+**Figure 3**: Better to compare average mutations per number of samples. This illustrates no correlation between mutations and geographic location or host sex. 
 
-```{r figure4}
+```{r plot-distinct-SNPs-count-per-location-sex}
 # create a plot of unique SNP locations within each gene across different sex
-figure4 <- vcf_with_metadata %>%
+distinct_snp_count_per_location_sex <- vcf_with_metadata %>%
   group_by(Municipalities, host_sex, pos) %>%
   filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
                                 "NOVA BASSANO", "SANTO ANTONIO DE PADUA",
@@ -292,13 +298,15 @@ figure4 <- vcf_with_metadata %>%
                                    vjust = 0.5,
                                    hjust = 1))  # makes the x-label vertical
 
-ggsave(figure4, filename = paste0("output/figures/figure4.png"))
-figure4
+ggsave(distinct_snp_count_per_location_sex,
+       filename = paste0("output/figures/",
+                         "distinct_snp_count_per_location_sex.png"))
+distinct_snp_count_per_location_sex
 ```
 
 **Figure 4**: The count of distinct SNPs in the samples analyzed are similar irrespective of host sex and geographic location. 
 
-```{r figure5}
+```{r plot-COVID-cases-against-distinct-SNP-count}
 # create a plot of unique SNP locations within each gene across different sex
 total_snp <- vcf_with_metadata %>%
   group_by(Municipalities, pos) %>%
@@ -309,7 +317,7 @@ total_snp <- vcf_with_metadata %>%
   group_by(Municipalities) %>%
   tally()
 
-figure5 <- left_join(total_snp, tidybrazildata,
+covid_cases_against_distinct_SNP_count <- left_join(total_snp, tidybrazildata,
                      by = c("Municipalities" = "city")) %>%
   ggplot(aes(x = n,
              y = totalCases_per_100k_inhabitants)) +
@@ -319,15 +327,17 @@ figure5 <- left_join(total_snp, tidybrazildata,
        y = "Total cases per 100k inhabitants") + #add title and labels
   theme_few() # get rid of the grey background
 
-ggsave(figure5, filename = paste0("output/figures/figure5.png"))
-figure5
+ggsave(covid_cases_against_distinct_SNP_count,
+       filename = paste0("output/figures/",
+                         "COVID_cases_against_distinct_SNP_count.png"))
+covid_cases_against_distinct_SNP_count
 ```
 
 **Figure 5**: No correlation was found between COVID-19 spread and gene mutations.
 
-```{r figure6}
-figure6 <- left_join(total_snp, tidybrazildata,
-                     by = c("Municipalities" = "city")) %>%
+```{r plot-vaccination-rate-against-distinct-SNP-count}
+vaccination_rate_against_distinct_SNP_count <- 
+  left_join(total_snp, tidybrazildata, by = c("Municipalities" = "city")) %>%
   ggplot(aes(x = n, y = vaccination_rate)) +
   geom_point(aes(color = Municipalities)) +
   labs(title = "Vaccination rate vs. vs. count of distinct SNPs",
@@ -335,8 +345,10 @@ figure6 <- left_join(total_snp, tidybrazildata,
        y = "Vaccination rate (%)") +  # add title, axis labels, legend label
   theme_few() # get rid of the grey background
 
-ggsave(figure6, filename = paste0("output/figures/figure6.png"))
-figure6
+ggsave(vaccination_rate_against_distinct_SNP_count,
+       filename = paste0("output/figures/",
+                         "vaccination_rate_against_distinct_SNP_count.png"))
+vaccination_rate_against_distinct_SNP_count
 ```
 
 **Figure 6**:The vaccination rate doesn't seem to have any effect on dinstinct SNP count.
@@ -345,18 +357,18 @@ figure6
 
 # Tables
 
-```{r table1}
+```{r list-available-genome-sequences-per-municipalities-per-host-sex}
 final_table %>%  knitr::kable(col.names =
                                    c("Municipality",
-                                     "Total sample count",
-                                     "Female Count", "Male Count"),
+                                     "Total samples",
+                                     "Female samples", "Male sample"),
                               align = "c")
 ```
-**Table 1**: Number of genome sequences from different municipalities differenciated by host sex. The municipalities where only male or female sample data was available were excluded from the analysis.  
+**Table 1**: Number of genome sequences from different municipalities per host sex. The municipalities where only male or female sample data was available were excluded from the analysis.  
 
 \vspace{5mm}
 
-```{r table2}
+```{r list-brazil-covid-statistic-06-01-2021}
 # An example table to show the length of each gene using its start and end
 tidybrazildata %>%  knitr::kable(col.names =
                                    c("Date", "Municipality",
@@ -368,7 +380,7 @@ tidybrazildata %>%  knitr::kable(col.names =
 
 \vspace{5mm}
 
-```{r table3}
+```{r list-SARS-CoV-2-gene-names-locations-lengths}
 # An example table to show the length of each gene using its start and end
 gene_table %>%
   mutate(length = end - start) %>%
