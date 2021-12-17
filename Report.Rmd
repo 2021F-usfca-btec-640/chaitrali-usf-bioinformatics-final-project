@@ -169,7 +169,7 @@ tidybrazildata <- brazildata[, c("date",
 
 ```{r plot-unique-SNP-count-within-each-gene}
 # create a plot of unique SNP locations within each gene across different sex
-unique_SNP_count_within_each_gene <- vcf_with_metadata %>%
+unique_snp_within_each_gene <- vcf_with_metadata %>%
   filter(!is.na(gene)) %>% # get rid of SNPs not in gene regions
   group_by(gene, host_sex, pos) %>%
   tally() %>% # this gives a column n for the number of gene by position
@@ -191,17 +191,17 @@ unique_SNP_count_within_each_gene <- vcf_with_metadata %>%
   theme_few() # get rid of the grey background
 
 # save figure
-ggsave(unique_SNP_count_within_each_gene,
+ggsave(unique_snp_within_each_gene,
        filename = paste0("output/figures/",
                          "unique_SNP_count_within_each_gene.png"))
-unique_SNP_count_within_each_gene
+unique_snp_within_each_gene
 ```
 
 **Figure 1**: Significant difference in the count of distinct SNPs in gene S found in female and male hosts. Males seem to be more vulnerable.  
 
 ```{r plot-count-total-mutations-per-location-sex}
 # create a plot of total mutations for different host sex across municipalities
-count_total_mutations_per_location_sex <- vcf_with_metadata %>%
+total_mutations_per_loc_sex <- vcf_with_metadata %>%
   group_by(Municipalities, host_sex) %>%
   filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
                                 "NOVA BASSANO", "SANTO ANTONIO DE PADUA",
@@ -224,10 +224,10 @@ count_total_mutations_per_location_sex <- vcf_with_metadata %>%
                                    hjust = 1)) # makes the x-label vertical
 
 # save figure
-ggsave(count_total_mutations_per_location_sex,
+ggsave(total_mutations_per_loc_sex,
        filename = paste0("output/figures/",
                          "count_total_mutations_per_location_sex.png"))
-count_total_mutations_per_location_sex
+total_mutations_per_loc_sex
 ```
 
 **Figure 2**: Significant differences between male and female hosts as well as municipalities. But this might not be a fair comparison due to the different number of samples analyzed.
@@ -252,7 +252,7 @@ total_mutations_sex <-
   mutate(normalized = round(mutation_count / sample_count, 0))
 
 # plot of average total mutations per location and host sex
-average_mutations_count_per_location_sex <- ggplot(total_mutations_sex,
+avg_mutations_per_loc_sex <- ggplot(total_mutations_sex,
                   aes(x = Municipalities, y = normalized, fill = host_sex)) +
   geom_bar(stat = "identity", position = "dodge") + # makes a bar plot
   labs(title = "Total mutations divided by number of samples",
@@ -271,17 +271,17 @@ average_mutations_count_per_location_sex <- ggplot(total_mutations_sex,
                                    hjust = 1))  # makes the x-label vertical
 
 # save figure
-ggsave(average_mutations_count_per_location_sex,
+ggsave(avg_mutations_per_loc_sex,
        filename = paste0("output/figures/",
                       "normalized_mutations_count_per_location_sex.png"))
-average_mutations_count_per_location_sex
+avg_mutations_per_loc_sex
 ```
 
 **Figure 3**: Better to compare average mutations per number of samples. This plot illustrates no correlation between mutations and geographic location or host sex. 
 
 ```{r plot-distinct-SNPs-count-per-location-sex}
 # create a plot of total count of distinct per location and host sex
-distinct_snp_count_per_location_sex <- vcf_with_metadata %>%
+distinct_snp_per_location_sex <- vcf_with_metadata %>%
   group_by(Municipalities, host_sex, pos) %>%
   filter(!Municipalities %in% c("ITABORAI", "ITAGUAI", "NITEROI",
                                 "NOVA BASSANO", "SANTO ANTONIO DE PADUA",
@@ -306,10 +306,10 @@ distinct_snp_count_per_location_sex <- vcf_with_metadata %>%
                                    hjust = 1))  # makes the x-label vertical
 
 # save figure
-ggsave(distinct_snp_count_per_location_sex,
+ggsave(distinct_snp_per_location_sex,
        filename = paste0("output/figures/",
                          "distinct_snp_count_per_location_sex.png"))
-distinct_snp_count_per_location_sex
+distinct_snp_per_location_sex
 ```
 
 **Figure 4**: The count of distinct SNPs in the samples analyzed are similar irrespective of host sex and geographic location. 
@@ -325,7 +325,7 @@ total_snp <- vcf_with_metadata %>%
   group_by(Municipalities) %>%
   tally()
 
-covid_cases_against_distinct_SNP_count <- left_join(total_snp, tidybrazildata,
+covid_cases_distinct_snp_count <- left_join(total_snp, tidybrazildata,
                      by = c("Municipalities" = "city")) %>%
   ggplot(aes(x = n,
              y = totalCases_per_100k_inhabitants)) +
@@ -336,17 +336,17 @@ covid_cases_against_distinct_SNP_count <- left_join(total_snp, tidybrazildata,
   theme_few() # get rid of the grey background
 
 # save figure
-ggsave(covid_cases_against_distinct_SNP_count,
+ggsave(covid_cases_distinct_snp_count,
        filename = paste0("output/figures/",
                          "COVID_cases_against_distinct_SNP_count.png"))
-covid_cases_against_distinct_SNP_count
+covid_cases_distinct_snp_count
 ```
 
 **Figure 5**: No correlation between COVID-19 spread and gene mutations.
 
 ```{r plot-vaccination-rate-against-distinct-SNP-count}
 # create a plot of vaccination rate on June 1, 2021 vs. distinct SNP count
-vaccination_rate_against_distinct_SNP_count <- 
+vac_rate_distinct_snp_count <-
   left_join(total_snp, tidybrazildata, by = c("Municipalities" = "city")) %>%
   ggplot(aes(x = n, y = vaccination_rate)) +
   geom_point(aes(color = Municipalities)) +
@@ -356,10 +356,10 @@ vaccination_rate_against_distinct_SNP_count <-
   theme_few() # get rid of the grey background
 
 # save figure
-ggsave(vaccination_rate_against_distinct_SNP_count,
+ggsave(vac_rate_distinct_snp_count,
        filename = paste0("output/figures/",
                          "vaccination_rate_against_distinct_SNP_count.png"))
-vaccination_rate_against_distinct_SNP_count
+vac_rate_distinct_snp_count
 ```
 
 **Figure 6**: The vaccination rate doesn't seem to affect distinct SNP count.
